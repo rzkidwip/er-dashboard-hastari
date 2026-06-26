@@ -1,22 +1,7 @@
 import { Users, Cake, CalendarDays, FileText, Eye, Heart, Wallet } from 'lucide-react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import EntityLogo, { ENTITY_LOGOS, ENTITY_COLORS } from '../components/EntityLogo'
 import './Dashboard.css'
-
-const ENTITY_COLORS = {
-  HAI:'#CC1010', HAP:'#007AFF', ASI:'#E8A000',
-  BPN:'#2B5CE6', CMS:'#6B4F2A', IAS:'#2E7D32', HPA:'#0091A8',
-}
-
-const BASE = import.meta.env.BASE_URL
-const ENTITY_LOGOS = {
-  HAI: `${BASE}logos/HAI.png`,
-  HAP: `${BASE}logos/HAP.png`,
-  ASI: `${BASE}logos/ASI.png`,
-  BPN: `${BASE}logos/BPN.png`,
-  CMS: `${BASE}logos/CMS.png`,
-  IAS: `${BASE}logos/IAS.png`,
-  HPA: `${BASE}logos/HPA.png`,
-}
 
 function EntityLegend({ data }) {
   return (
@@ -24,7 +9,7 @@ function EntityLegend({ data }) {
       {data.map(({ name, value }) => (
         <div key={name} className="entity-legend-item">
           {ENTITY_LOGOS[name]
-            ? <img src={ENTITY_LOGOS[name]} alt={name} className="entity-legend-logo" />
+            ? <EntityLogo entity={name} size={28} />
             : <span className="entity-legend-dot" style={{ background: ENTITY_COLORS[name] || '#8E8E93' }} />}
           <span className="entity-legend-name">{name}</span>
           <span className="entity-legend-count">{value}</span>
@@ -167,11 +152,9 @@ export default function Dashboard({ data }) {
           <div className="birthday-grid">
             {birthdays.map((e,i)=>(
               <div className="birthday-chip" key={i}>
-                <div className="bd-avatar">
-                  {ENTITY_LOGOS[e.entity]
-                    ? <img src={ENTITY_LOGOS[e.entity]} alt={e.entity} className="bd-entity-logo" />
-                    : e.nama.charAt(0)}
-                </div>
+                {ENTITY_LOGOS[e.entity]
+                  ? <EntityLogo entity={e.entity} size={34} />
+                  : <div className="bd-avatar">{e.nama.charAt(0)}</div>}
                 <div>
                   <div className="bd-name">{e.nama}</div>
                   <div className="bd-meta">{e.entity} · {e.birthDate}</div>

@@ -30,19 +30,11 @@
 }
 .entity-pill:hover { border-color: var(--label-3); color: var(--label); }
 .entity-pill.active { background: color-mix(in srgb, currentColor 8%, white); }
-.entity-pill-logo {
-  width: 18px; height: 18px;
-  object-fit: contain; border-radius: 3px; flex-shrink: 0;
-}
 
 /* Entity badge in table */
 .entity-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px 3px 6px; border-radius: 20px;
+  padding: 3px 10px 3px 4px; border-radius: 20px;
   border: 1.5px solid; font-size: 11px; font-weight: 700;
   background: white; white-space: nowrap;
-}
-.entity-badge-logo {
-  width: 18px; height: 18px;
-  object-fit: contain; border-radius: 3px; flex-shrink: 0;
 }

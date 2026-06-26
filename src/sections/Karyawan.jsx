@@ -1,22 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
+import EntityLogo, { ENTITY_COLORS } from '../components/EntityLogo'
 import './Karyawan.css'
 
-const ENTITY_COLORS = {
-  HAI:'#CC1010', HAP:'#007AFF', ASI:'#E8A000',
-  BPN:'#2B5CE6', CMS:'#6B4F2A', IAS:'#2E7D32', HPA:'#0091A8',
-}
-
-const BASE = import.meta.env.BASE_URL
-const ENTITY_LOGOS = {
-  HAI: `${BASE}logos/HAI.png`,
-  HAP: `${BASE}logos/HAP.png`,
-  ASI: `${BASE}logos/ASI.png`,
-  BPN: `${BASE}logos/BPN.png`,
-  CMS: `${BASE}logos/CMS.png`,
-  IAS: `${BASE}logos/IAS.png`,
-  HPA: `${BASE}logos/HPA.png`,
-}
 const LEVEL_COLORS = {
   DIRECTOR:'var(--red)',MANAGER:'var(--blue)',
   SUPERVISOR:'var(--purple)',OFFICER:'var(--label-3)',
@@ -61,9 +47,7 @@ export default function Karyawan({ data }) {
               className={`entity-pill ${entity===en?'active':''}`}
               style={entity===en&&en!=='Semua' ? { borderColor:ENTITY_COLORS[en], color:ENTITY_COLORS[en] } : {}}
               onClick={()=>setEntity(en)}>
-              {ENTITY_LOGOS[en] && (
-                <img src={ENTITY_LOGOS[en]} alt={en} className="entity-pill-logo" />
-              )}
+              <EntityLogo entity={en} size={20} />
               {en}
             </button>
           ))}
@@ -96,9 +80,7 @@ export default function Karyawan({ data }) {
                 <td style={{fontSize:12,color:'var(--blue)'}}>{e.email||'—'}</td>
                 <td>
                   <span className="entity-badge" style={{ borderColor: ENTITY_COLORS[e.entity]||'#8E8E93', color: ENTITY_COLORS[e.entity]||'#8E8E93' }}>
-                    {ENTITY_LOGOS[e.entity] && (
-                      <img src={ENTITY_LOGOS[e.entity]} alt={e.entity} className="entity-badge-logo" />
-                    )}
+                    <EntityLogo entity={e.entity} size={24} />
                     {e.entity}
                   </span>
                 </td>
