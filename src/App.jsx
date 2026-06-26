@@ -21,7 +21,7 @@ const SECTIONS = {
 
 export default function App() {
   const [active, setActive] = useState('dashboard')
-  const { data, loading, syncTime, refresh } = useData()
+  const { data, loading, syncTime, followers, refresh } = useData()
   const Section = SECTIONS[active]
 
   return (
@@ -36,7 +36,7 @@ export default function App() {
               <p className="loading-text">Memuat data dari Google Sheets…</p>
             </div>
           ) : (
-            <Section data={data} />
+            <Section data={data} followers={followers} />
           )}
         </main>
       </div>

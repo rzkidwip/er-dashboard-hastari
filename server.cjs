@@ -29,6 +29,76 @@ let cachedData = null;
 let lastSyncTime = 0;
 const CACHE_DURATION = 30 * 60 * 1000;
 
+// ── Instagram followers scraper ───────────────────────────────────────────────
+const INSTAGRAM_ACCOUNTS = {
+  'Life at Hastari':      'lifeathastari',
+  'Hastari Jaya Sentosa': 'hastarijayasentosa',
+};
+
+const followerCache = {};
+const FOLLOWER_TTL  = 6 * 60 * 60 * 1000; // 6 hours
+
+function parseFollowerCount(str) {
+  if (!str) return null;
+  const clean = str.replace(/,/g, '').trim();
+  const m = clean.match(/^([\d.]+)\s*([KMkm]?)/i);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  const unit = m[2].toUpperCase();
+  if (unit === 'K') return Math.round(n * 1_000);
+  if (unit === 'M') return Math.round(n * 1_000_000);
+  return Math.round(n);
+}
+
+async function scrapeFollowers(handle) {
+  const url = `https://www.instagram.com/${handle}/`;
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cache-Control': 'no-cache',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Upgrade-Insecure-Requests': '1',
+  };
+
+  const res = await axios.get(url, {
+    headers,
+    timeout: 15000,
+    maxRedirects: 3,
+    validateStatus: s => s < 400,
+  });
+
+  const html = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+
+  // Pattern 1: edge_followed_by (older API data in page source)
+  let m = html.match(/"edge_followed_by":\{"count":(\d+)\}/);
+  if (m) return parseInt(m[1]);
+
+  // Pattern 2: follower_count in JSON
+  m = html.match(/"follower_count":(\d+)/);
+  if (m) return parseInt(m[1]);
+
+  // Pattern 3: og:description  "X Followers, Y Following …"
+  const ogMatch = html.match(/property="og:description"[^>]*content="([^"]+)"/)
+                ?? html.match(/content="([^"]+)"[^>]*property="og:description"/);
+  if (ogMatch) {
+    const nm = ogMatch[1].match(/([\d,\.]+[KMkm]?)\s+Followers/i);
+    if (nm) return parseFollowerCount(nm[1]);
+  }
+
+  // Pattern 4: meta name description
+  const metaMatch = html.match(/name="description"[^>]*content="([^"]+)"/)
+                  ?? html.match(/content="([^"]+)"[^>]*name="description"/);
+  if (metaMatch) {
+    const nm = metaMatch[1].match(/([\d,\.]+[KMkm]?)\s+Followers/i);
+    if (nm) return parseFollowerCount(nm[1]);
+  }
+
+  return null;
+}
+
 // CSV parser — handles quoted fields with commas and escaped quotes
 function parseCSV(text) {
   const rows = [];
@@ -229,6 +299,32 @@ async function fetchAll() {
 }
 
 // ── ROUTES ────────────────────────────────────────────────────────────────────
+
+app.get('/api/followers', async (req, res) => {
+  const result = {};
+  const now = Date.now();
+
+  for (const [name, handle] of Object.entries(INSTAGRAM_ACCOUNTS)) {
+    const cached = followerCache[name];
+    if (cached && (now - cached.at) < FOLLOWER_TTL) {
+      result[name] = cached.count;
+      continue;
+    }
+    try {
+      console.log(`📸 Scraping @${handle}…`);
+      const count = await scrapeFollowers(handle);
+      followerCache[name] = { count, at: now };
+      result[name] = count;
+      console.log(`  ✓ @${handle}: ${count ?? 'not found'}`);
+    } catch (e) {
+      console.warn(`  ⚠ @${handle}: ${e.message}`);
+      result[name] = cached?.count ?? null;
+    }
+  }
+
+  res.json(result);
+});
+
 app.get('/api/data', async (req, res) => {
   try {
     const now = Date.now();

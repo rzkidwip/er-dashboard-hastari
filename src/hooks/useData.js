@@ -300,9 +300,10 @@ async function fetchAll() {
 
 // ── HOOK ──────────────────────────────────────────────────────────────────────
 export function useData() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [syncTime, setSyncTime] = useState(localStorage.getItem('syncTime') || '')
+  const [data,      setData]      = useState(null)
+  const [loading,   setLoading]   = useState(true)
+  const [syncTime,  setSyncTime]  = useState(localStorage.getItem('syncTime') || '')
+  const [followers, setFollowers] = useState({})
 
   const load = useCallback(async (force = false) => {
     if (!force) {
@@ -331,7 +332,29 @@ export function useData() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // Fetch Instagram followers from backend (best-effort; silent if server offline)
+  const loadFollowers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/followers', { signal: AbortSignal.timeout(10000) })
+      if (!res.ok) return
+      const json = await res.json()
+      setFollowers(json)
+      localStorage.setItem('igFollowers', JSON.stringify({ data: json, at: Date.now() }))
+    } catch {
+      // Server not running or Instagram blocked — restore last cached value
+      try {
+        const saved = localStorage.getItem('igFollowers')
+        if (saved) setFollowers(JSON.parse(saved).data ?? {})
+      } catch { /* nothing */ }
+    }
+  }, [])
 
-  return { data, loading, syncTime, refresh: () => load(true) }
+  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    loadFollowers()
+    const id = setInterval(loadFollowers, 6 * 60 * 60 * 1000) // refresh every 6 h
+    return () => clearInterval(id)
+  }, [loadFollowers])
+
+  return { data, loading, syncTime, followers, refresh: () => load(true) }
 }

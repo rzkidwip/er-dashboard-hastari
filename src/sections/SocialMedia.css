@@ -109,6 +109,20 @@
 .sm3-kpi-lbl { font-size: 12px; color: var(--label-3); font-weight: 500; }
 .sm3-kpi-sub { font-size: 11px; color: var(--label-3); margin-top: 4px; }
 
+.sm3-kpi-badges { display: flex; align-items: center; gap: 5px; }
+.sm3-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.5);
+  animation: sm3-pulse 1.8s ease-out infinite;
+  flex-shrink: 0;
+}
+@keyframes sm3-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(16,185,129,0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(16,185,129,0);    }
+  100% { box-shadow: 0 0 0 0   rgba(16,185,129,0);    }
+}
+
 /* ── Heatmap ───────────────────────────────────────────────────────────────── */
 .sm3-hm-wrap { display: flex; flex-direction: column; gap: 6px; }
 .sm3-hm-week-labels {

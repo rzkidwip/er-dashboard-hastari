@@ -154,17 +154,20 @@ function trendForField(analytics, field) {
   return { cur, prev, pct: prev > 0 ? ((cur - prev) / prev) * 100 : null }
 }
 
-function KPICard({ icon: Icon, label, value, pct, color }) {
+function KPICard({ icon: Icon, label, value, pct, color, live }) {
   const up = pct !== null && pct >= 0
   return (
     <div className="sm3-kpi" style={{ '--kc': color }}>
       <div className="sm3-kpi-top">
         <div className="sm3-kpi-icon-wrap"><Icon size={18} color={color} /></div>
-        {pct !== null && (
-          <span className={`sm3-kpi-trend ${up ? 'up' : 'dn'}`}>
-            {up ? '↑' : '↓'} {Math.abs(pct).toFixed(1)}%
-          </span>
-        )}
+        <div className="sm3-kpi-badges">
+          {live && <span className="sm3-live-dot" title="Data live dari Instagram" />}
+          {pct !== null && (
+            <span className={`sm3-kpi-trend ${up ? 'up' : 'dn'}`}>
+              {up ? '↑' : '↓'} {Math.abs(pct).toFixed(1)}%
+            </span>
+          )}
+        </div>
       </div>
       <div className="sm3-kpi-val" style={{ color }}>{value}</div>
       <div className="sm3-kpi-lbl">{label}</div>
@@ -175,25 +178,30 @@ function KPICard({ icon: Icon, label, value, pct, color }) {
   )
 }
 
-function KPICards({ analytics, summary, accCfg }) {
+function KPICards({ analytics, summary, accCfg, igFollowers }) {
   const postT  = useMemo(() => trendForField(analytics, 'count'), [analytics])
   const reachT = useMemo(() => trendForField(analytics, 'reach'), [analytics])
   const viewsT = useMemo(() => trendForField(analytics, 'views'), [analytics])
 
   const followers = useMemo(() => {
+    // Prefer live Instagram data, fall back to Google Sheets summary
+    const live = igFollowers?.[accCfg.name]
+    if (live != null) return live
     const s = summary?.find(s => s.account === accCfg.name)
     return s ? Number((s.totalFollowers || '0').toString().replace(/,/g, '')) : null
-  }, [summary, accCfg])
+  }, [igFollowers, summary, accCfg])
+
+  const isLive = igFollowers?.[accCfg.name] != null
 
   const totalReach = analytics.reduce((s, a) => s + (Number(a.reach) || 0), 0)
   const totalViews = analytics.reduce((s, a) => s + (Number(a.views) || 0), 0)
 
   return (
     <div className="sm3-kpi-row">
-      <KPICard icon={Smartphone} label="Total Posts"  value={analytics.length}                     pct={postT.pct}  color={accCfg.primary} />
-      <KPICard icon={Users}      label="Followers"    value={followers ? fmtNum(followers) : '—'}  pct={null}       color="#10B981" />
-      <KPICard icon={TrendingUp} label="Total Reach"  value={fmtNum(totalReach)}                   pct={reachT.pct} color="#7C3AED" />
-      <KPICard icon={Eye}        label="Total Views"  value={fmtNum(totalViews)}                   pct={viewsT.pct} color="#3B82F6" />
+      <KPICard icon={Smartphone} label="Total Posts"  value={analytics.length}                                   pct={postT.pct}  color={accCfg.primary} />
+      <KPICard icon={Users}      label="Followers"    value={followers != null ? fmtNum(followers) : '—'}  pct={null}       color="#10B981" live={isLive} />
+      <KPICard icon={TrendingUp} label="Total Reach"  value={fmtNum(totalReach)}                                 pct={reachT.pct} color="#7C3AED" />
+      <KPICard icon={Eye}        label="Total Views"  value={fmtNum(totalViews)}                                 pct={viewsT.pct} color="#3B82F6" />
     </div>
   )
 }
@@ -754,7 +762,7 @@ function TopPosts({ analytics }) {
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
-export default function SocialMedia({ data }) {
+export default function SocialMedia({ data, followers: igFollowers = {} }) {
   const [account,    setAccount]    = useState(ACCOUNTS[0].name)
   const [filterDate, setFilterDate] = useState(null)
 
@@ -793,7 +801,7 @@ export default function SocialMedia({ data }) {
       <div className="sm3-layout">
         {/* Left 65% */}
         <div className="sm3-left">
-          <KPICards analytics={accAna} summary={summary} accCfg={accCfg} />
+          <KPICards analytics={accAna} summary={summary} accCfg={accCfg} igFollowers={igFollowers} />
           <HeatmapSection analytics={accAna} />
           <GrowthChart analytics={accAna} />
           <ContentInsights
