@@ -343,6 +343,7 @@
   padding-bottom: 6px;
   letter-spacing: 0.3px;
 }
+.mc-hdr-sun { color: #DC2626 !important; }
 
 .mc-day {
   position: relative;
@@ -380,6 +381,8 @@
   color: var(--surface) !important;
   font-weight: 700;
 }
+
+.mc-red { color: #DC2626 !important; font-weight: 600; }
 
 .mc-dot {
   width: 4px;

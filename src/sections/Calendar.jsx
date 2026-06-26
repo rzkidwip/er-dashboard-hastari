@@ -74,19 +74,24 @@ function MiniCalendar({ year, monthIdx, eventMap, selectedDate, onSelectDate }) 
     <div className="mc-card">
       <div className="mc-title">{MONTHS_ID[monthIdx].toUpperCase()} {year}</div>
       <div className="mc-grid">
-        {DAY_ABBR.map(d => <span key={d} className="mc-hdr">{d}</span>)}
+        {DAY_ABBR.map((d, di) => (
+          <span key={d} className={`mc-hdr${di === 0 ? ' mc-hdr-sun' : ''}`}>{d}</span>
+        ))}
         {cells.map((day, i) => {
           if (!day) return <span key={`_${i}`} />
-          const key  = toISO(year, monthIdx + 1, day)
-          const evs  = eventMap[key] || []
-          const isToday = isNow && today.getDate() === day
-          const isSel   = selectedDate === key
-          const dotColor = evs.length ? (CAT[evs[0].category]?.color || '#DC2626') : null
+          const key       = toISO(year, monthIdx + 1, day)
+          const evs       = eventMap[key] || []
+          const isToday   = isNow && today.getDate() === day
+          const isSel     = selectedDate === key
+          const isSun     = (i % 7) === 0
+          const isHoliday = evs.some(e => e.category === 'holiday' || e.category === 'religious')
+          const isRed     = (isSun || isHoliday) && !isToday && !isSel
+          const dotColor  = evs.length ? (CAT[evs[0].category]?.color || '#DC2626') : null
 
           return (
             <button
               key={key}
-              className={['mc-day', isToday ? 'mc-today' : '', isSel ? 'mc-sel' : ''].filter(Boolean).join(' ')}
+              className={['mc-day', isToday ? 'mc-today' : '', isSel ? 'mc-sel' : '', isRed ? 'mc-red' : ''].filter(Boolean).join(' ')}
               onClick={() => onSelectDate(isSel ? null : key)}
               title={evs.map(e => e.title).join('\n') || undefined}
             >
