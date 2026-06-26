@@ -1,10 +1,11 @@
-import { LayoutDashboard, Users, CalendarDays, Trophy, Share2, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, CalendarDays, Trophy, Share2, CreditCard, CalendarRange } from 'lucide-react'
 import './Sidebar.css'
 
 const MENU = [
   { id: 'dashboard', label: 'Dashboard',    Icon: LayoutDashboard },
   { id: 'karyawan',  label: 'Karyawan',     Icon: Users },
   { id: 'events',    label: 'Events',       Icon: CalendarDays },
+  { id: 'calendar',  label: 'Calendar',     Icon: CalendarRange },
   { id: 'sports',    label: 'Sports',       Icon: Trophy },
   { id: 'social',    label: 'Social Media', Icon: Share2 },
   { id: 'expenses',  label: 'Expenses',     Icon: CreditCard },

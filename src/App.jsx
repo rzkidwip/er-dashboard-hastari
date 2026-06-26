@@ -7,6 +7,7 @@ import Events from './sections/Events.jsx'
 import Sports from './sections/Sports.jsx'
 import SocialMedia from './sections/SocialMedia.jsx'
 import Expenses from './sections/Expenses.jsx'
+import Calendar from './sections/Calendar.jsx'
 import { useData } from './hooks/useData.js'
 import './App.css'
 
@@ -17,6 +18,7 @@ const SECTIONS = {
   sports:    Sports,
   social:    SocialMedia,
   expenses:  Expenses,
+  calendar:  Calendar,
 }
 
 export default function App() {

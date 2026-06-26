@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const CACHE_VERSION = 'v14'
+const CACHE_VERSION = 'v15'
 const SHEET_ID = '1qgzmEsj05nX3jG9FXvJAKUiwb9vsEEyJ'
 
 const FALLBACK_EXPENSES = [
@@ -102,6 +102,65 @@ async function fetchSheet(gid) {
   return parseCSV(await r.text())
 }
 
+async function fetchSheetByName(name) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`HTTP ${r.status}`)
+  return parseCSV(await r.text())
+}
+
+// ── Calendar event helpers ────────────────────────────────────────────────────
+const CAL_MONTH_MAP = {
+  January:1,February:2,March:3,April:4,May:5,June:6,
+  July:7,August:8,September:9,October:10,November:11,December:12,
+}
+
+const CAL_UNDATED = {
+  'Peringatan Bulan K3 Nasional':    '2026-01-12',
+  'Hari Lahir Pancasila':            '2026-06-01',
+  'Tahun Baru Islam 2026':           '2026-06-27',
+  'Hari Kemerdekaan Indonesia':      '2026-08-17',
+  'Maulid Nabi Muhammad 2026':       '2026-09-05',
+  'Hari Kesaktian Pancasila':        '2026-10-01',
+  'Hari Batik Nasional':             '2026-10-02',
+  'Hari Kesehatan Mental Sedunia':   '2026-10-10',
+}
+
+function calCategory(title) {
+  if (/ulang.?tahun|birthday|ultah/i.test(title)) return 'birthday'
+  if (/hari raya|idul|lebaran|natal|paskah|waisak|nyepi|imlek|isra mi|maulid|tahun baru islam/i.test(title)) return 'holiday'
+  if (/hari (nasional|kemerdekaan|kartini|buruh|pendidikan|pahlawan|ayah|ibu|pancasila|olahraga|pertambangan|batik|kesehatan|kesaktian)|kenaikan yesus|ramadhan/i.test(title)) return 'national'
+  return 'event'
+}
+
+function parseCalendarEvents(rows) {
+  const events = []
+  rows.forEach(row => {
+    const dateStr = (row[25] || '').trim()
+    const name    = (row[26] || '').trim().replace(/\t/g, '').trim()
+    if (!name) return
+
+    let isoDate = null
+    if (dateStr) {
+      const parts = dateStr.split(' ')
+      if (parts.length >= 3) {
+        const day   = parseInt(parts[0])
+        const month = CAL_MONTH_MAP[parts[1]]
+        const year  = parseInt(parts[2])
+        if (!isNaN(day) && month && !isNaN(year)) {
+          isoDate = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+        }
+      }
+    } else if (name in CAL_UNDATED) {
+      isoDate = CAL_UNDATED[name]
+    }
+
+    // Include events with known dates; skip undated/unknown employee birthdays
+    if (isoDate) events.push({ date: isoDate, title: name, category: calCategory(name) })
+  })
+  return events
+}
+
 function toObjects(rows, anchor) {
   let hi = rows.findIndex(r => r.some(c => c.toLowerCase().trim() === anchor.toLowerCase()))
   if (hi === -1) hi = 0
@@ -128,7 +187,7 @@ function splitSideBySide(rows) {
 async function fetchAll() {
   const data = {
     employees: [], events: [], volunteers: [], sports: [],
-    posts: [], analytics: [], summary: [], expenses: [],
+    posts: [], analytics: [], summary: [], expenses: [], calendarEvents: [],
     syncTime: new Date().toISOString(),
   }
 
@@ -174,11 +233,13 @@ async function fetchAll() {
     if (key) Object.assign(e, EMPLOYEE_PATCHES[key])
   })
 
-  const [evRows, volRows, spRows, postRows, anlRows, sumRows, expRows] =
+  const safeByName = n => fetchSheetByName(n).catch(() => [])
+
+  const [evRows, volRows, spRows, postRows, anlRows, sumRows, expRows, calRows] =
     await Promise.all([
       safe(GID.EVENTS), safe(GID.VOLUNTEERS), safe(GID.SPORTS),
       safe(GID.POSTS),  safe(GID.ANALYTICS),  safe(GID.SUMMARY),
-      safe(GID.EXPENSES),
+      safe(GID.EXPENSES), safeByName('CALENDER_ER'),
     ])
 
   // Events
@@ -277,6 +338,11 @@ async function fetchAll() {
         followerGrowth: o['Follower Growth %'] || '0',
       })).filter(s => s.quarter)
   } catch (e) { console.warn('Summary', e.message) }
+
+  // Calendar events
+  try {
+    data.calendarEvents = parseCalendarEvents(calRows)
+  } catch (e) { console.warn('Calendar', e.message) }
 
   // Expenses
   try {
