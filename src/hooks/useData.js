@@ -163,13 +163,15 @@ async function fetchAll() {
     } catch (e) { console.warn(entity, e.message) }
   })
 
-  // Patch NIK yang kosong di spreadsheet
-  const NIK_PATCHES = {
-    'AZZUWIR AMIR':                    '2270022001',
-    'BRIGITTA THEOLA WINONA SARISTASYA': '2450002012',
+  // Patch data karyawan yang tidak lengkap / salah di spreadsheet
+  const EMPLOYEE_PATCHES = {
+    'AZZUWIR AMIR':                      { nik: '2270022001' },
+    'BRIGITTA THEOLA WINONA SARISTASYA': { nik: '2450002012' },
+    'AFDHAL YUSRA WARDHANA':             { nik: '2660045001', jobLevel: 'SUPERVISOR' },
   }
   data.employees.forEach(e => {
-    if (!e.nik && NIK_PATCHES[e.nama]) e.nik = NIK_PATCHES[e.nama]
+    const patch = EMPLOYEE_PATCHES[e.nama]
+    if (patch) Object.assign(e, patch)
   })
 
   const [evRows, volRows, spRows, postRows, anlRows, sumRows, expRows] =
