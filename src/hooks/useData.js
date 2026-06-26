@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const CACHE_VERSION = 'v13'
+const CACHE_VERSION = 'v14'
 const SHEET_ID = '1qgzmEsj05nX3jG9FXvJAKUiwb9vsEEyJ'
 
 const FALLBACK_EXPENSES = [
@@ -170,8 +170,8 @@ async function fetchAll() {
     'AFDHAL YUSRA WARDHANA':             { nik: '2660045001', jobLevel: 'SUPERVISOR' },
   }
   data.employees.forEach(e => {
-    const patch = EMPLOYEE_PATCHES[e.nama]
-    if (patch) Object.assign(e, patch)
+    const key = Object.keys(EMPLOYEE_PATCHES).find(k => k.trim().toUpperCase() === (e.nama || '').trim().toUpperCase())
+    if (key) Object.assign(e, EMPLOYEE_PATCHES[key])
   })
 
   const [evRows, volRows, spRows, postRows, anlRows, sumRows, expRows] =
