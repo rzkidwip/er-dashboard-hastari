@@ -107,10 +107,6 @@ export default function Calendar({ data }) {
 
   const now      = new Date()
   const thisYear = now.getFullYear()
-  const curMonth = now.getMonth()
-  const nextMonth = (curMonth + 1) % 12
-  const nextMonthYear = nextMonth === 0 ? thisYear + 1 : thisYear
-
   const [year,         setYear]         = useState(thisYear)
   const [activeFilters,setActiveFilters]= useState(new Set())
   const [selectedDate, setSelectedDate] = useState(null)
@@ -253,32 +249,22 @@ export default function Calendar({ data }) {
           )}
         </div>
 
-        {/* RIGHT: Mini Calendars */}
+        {/* RIGHT: 12-Month Scrollable Calendars */}
         <div className="cal2-right">
 
-          <MiniCalendar
-            year={thisYear}
-            monthIdx={curMonth}
-            eventMap={curYearMap}
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-          />
-
-          <div className="cal2-divider" />
-
-          <MiniCalendar
-            year={nextMonthYear}
-            monthIdx={nextMonth}
-            eventMap={curYearMap}
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-          />
-
-          {/* Year nav (bottom of right panel) */}
-          <div className="cal2-right-year">
-            <button className="cal2-nav-btn" onClick={() => { setYear(y => y - 1); setSelectedDate(null) }}>‹</button>
-            <span className="cal2-year-lbl">{year}</span>
-            <button className="cal2-nav-btn" onClick={() => { setYear(y => y + 1); setSelectedDate(null) }}>›</button>
+          {/* Scrollable 12 months */}
+          <div className="cal2-months-scroll">
+            {Array.from({ length: 12 }, (_, monthIdx) => (
+              <div key={monthIdx} className={`cal2-month-wrap${monthIdx < 11 ? ' cal2-month-sep' : ''}`}>
+                <MiniCalendar
+                  year={year}
+                  monthIdx={monthIdx}
+                  eventMap={yearMap}
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                />
+              </div>
+            ))}
           </div>
 
           {/* Selected date detail */}
@@ -286,7 +272,7 @@ export default function Calendar({ data }) {
             <div className="cal2-detail">
               <div className="cal2-detail-hdr">
                 <span className="cal2-detail-date">
-                  {new Date(selectedDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  {new Date(selectedDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'long' })}
                 </span>
                 <button className="cal2-detail-close" onClick={() => setSelectedDate(null)}>✕</button>
               </div>
@@ -301,6 +287,14 @@ export default function Calendar({ data }) {
               })}
             </div>
           )}
+
+          {/* Year nav — sticky at bottom */}
+          <div className="cal2-right-year">
+            <button className="cal2-nav-btn" onClick={() => { setYear(y => y - 1); setSelectedDate(null) }}>‹</button>
+            <span className="cal2-year-lbl">{year}</span>
+            <button className="cal2-nav-btn" onClick={() => { setYear(y => y + 1); setSelectedDate(null) }}>›</button>
+          </div>
+
         </div>
       </div>
     </div>
