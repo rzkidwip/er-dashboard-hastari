@@ -1,241 +1,308 @@
 import { useState, useMemo } from 'react'
 import './Calendar.css'
 
+// ── Category config ──────────────────────────────────────────────────────────
 const CAT = {
-  holiday:  { color: '#FF3B30', bg: '#FFF1F0', label: 'Libur Resmi' },
-  national: { color: '#FF9500', bg: '#FFF8F0', label: 'Hari Nasional' },
-  birthday: { color: '#AF52DE', bg: '#F9F0FF', label: 'Ulang Tahun' },
-  event:    { color: '#007AFF', bg: '#EFF6FF', label: 'ER Events' },
+  holiday:  { color: '#DC2626', bg: '#FFF1F0', label: 'Libur Nasional', badge: 'Libur' },
+  religious:{ color: '#7C3AED', bg: '#F5F3FF', label: 'Keagamaan',      badge: 'Nasional' },
+  birthday: { color: '#EC4899', bg: '#FDF2F8', label: 'Ulang Tahun',    badge: 'Ulang Tahun' },
+  company:  { color: '#2563EB', bg: '#EFF6FF', label: 'ER Events',      badge: 'ER' },
 }
 
-const MONTHS_ID = [
-  'Januari','Februari','Maret','April','Mei','Juni',
-  'Juli','Agustus','September','Oktober','November','Desember',
+const FILTERS = [
+  { key: 'holiday',   label: 'Libur' },
+  { key: 'religious', label: 'Nasional' },
+  { key: 'birthday',  label: 'Ulang Tahun' },
+  { key: 'company',   label: 'ER Events' },
 ]
-const DAY_ABBR = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
 
-function toISO(year, month1, day) {
-  return `${year}-${String(month1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+const MONTHS_ID  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+const DAY_ABBR   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function toISO(y, m1, d) {
+  return `${y}-${String(m1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
 }
 
-function buildEventMap(calendarEvents, employees, year) {
+function buildEventMap(calEvents, employees, year) {
   const map = {}
 
-  calendarEvents.forEach(ev => {
+  calEvents.forEach(ev => {
     if (!ev.date) return
-    const evYear = parseInt(ev.date.slice(0, 4))
-    if (evYear !== year) return
+    if (parseInt(ev.date.slice(0, 4)) !== year) return
     if (!map[ev.date]) map[ev.date] = []
     map[ev.date].push({ title: ev.title, category: ev.category })
   })
 
   employees.forEach(emp => {
     if (!emp.birthDate || !emp.nama) return
-    const parts = emp.birthDate.split('/')
-    if (parts.length < 3) return
-    const day = parseInt(parts[0]), month = parseInt(parts[1])
+    const [dd, mm] = emp.birthDate.split('/')
+    const day = parseInt(dd), month = parseInt(mm)
     if (!day || !month || month > 12) return
     const key = toISO(year, month, day)
     if (!map[key]) map[key] = []
-    const first2 = emp.nama.split(' ').slice(0, 2).join(' ')
-    if (!map[key].some(e => e.title.toLowerCase().includes(first2.toLowerCase()))) {
-      map[key].push({ title: `${first2} (${emp.entity})`, category: 'birthday' })
+    const name = emp.nama.split(' ').slice(0, 2).join(' ')
+    if (!map[key].some(e => e.title.toLowerCase().includes(name.toLowerCase()))) {
+      map[key].push({ title: `${name} (${emp.entity})`, category: 'birthday' })
     }
   })
 
   return map
 }
 
-function MonthCard({ year, monthIdx, eventMap, selectedDate, onSelectDate }) {
-  const today = new Date()
-  const isCurrentYear  = today.getFullYear() === year
-  const isCurrentMonth = isCurrentYear && today.getMonth() === monthIdx
-  const daysInMonth    = new Date(year, monthIdx + 1, 0).getDate()
-  const firstWeekday   = new Date(year, monthIdx, 1).getDay()
+function countdown(dateStr) {
+  const diff = Math.ceil((new Date(dateStr + 'T00:00:00') - new Date()) / 86400000)
+  if (diff <= 0) return 'Hari ini'
+  if (diff === 1) return 'Besok'
+  if (diff < 30) return `~${diff}d lagi`
+  return `~${Math.round(diff / 30)} bln lagi`
+}
+
+// ── Mini Calendar ────────────────────────────────────────────────────────────
+function MiniCalendar({ year, monthIdx, eventMap, selectedDate, onSelectDate }) {
+  const today  = new Date()
+  const isNow  = today.getFullYear() === year && today.getMonth() === monthIdx
+  const daysInMonth  = new Date(year, monthIdx + 1, 0).getDate()
+  const firstWeekday = new Date(year, monthIdx, 1).getDay()
 
   const cells = []
   for (let i = 0; i < firstWeekday; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
   while (cells.length % 7 !== 0) cells.push(null)
 
-  const weeks = []
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
-
   return (
-    <div className="cal-month-card">
-      <div className="cal-month-name">{MONTHS_ID[monthIdx]}</div>
-      <div className="cal-day-row cal-day-hdr">
-        {DAY_ABBR.map(d => <span key={d}>{d}</span>)}
-      </div>
-      {weeks.map((week, wi) => (
-        <div key={wi} className="cal-day-row">
-          {week.map((day, di) => {
-            if (!day) return <span key={di} className="cal-day-empty" />
-            const key    = toISO(year, monthIdx + 1, day)
-            const events = eventMap[key] || []
-            const isToday    = isCurrentMonth && today.getDate() === day
-            const isSelected = selectedDate === key
-            const isSun      = di === 0
-            const isSat      = di === 6
+    <div className="mc-card">
+      <div className="mc-title">{MONTHS_ID[monthIdx].toUpperCase()} {year}</div>
+      <div className="mc-grid">
+        {DAY_ABBR.map(d => <span key={d} className="mc-hdr">{d}</span>)}
+        {cells.map((day, i) => {
+          if (!day) return <span key={`_${i}`} />
+          const key  = toISO(year, monthIdx + 1, day)
+          const evs  = eventMap[key] || []
+          const isToday = isNow && today.getDate() === day
+          const isSel   = selectedDate === key
+          const dotColor = evs.length ? (CAT[evs[0].category]?.color || '#DC2626') : null
 
-            return (
-              <button
-                key={key}
-                className={[
-                  'cal-day',
-                  isToday    ? 'cal-today'    : '',
-                  isSelected ? 'cal-selected' : '',
-                  events.length ? 'cal-has-ev' : '',
-                  isSun ? 'cal-sun' : '',
-                  isSat ? 'cal-sat' : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => onSelectDate(isSelected ? null : key)}
-              >
-                <span className="cal-dn">{day}</span>
-                {events.length > 0 && (
-                  <span className="cal-dots">
-                    {events.slice(0, 3).map((ev, j) => (
-                      <span key={j} className="cal-dot" style={{ background: CAT[ev.category]?.color || '#8E8E93' }} />
-                    ))}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      ))}
+          return (
+            <button
+              key={key}
+              className={['mc-day', isToday ? 'mc-today' : '', isSel ? 'mc-sel' : ''].filter(Boolean).join(' ')}
+              onClick={() => onSelectDate(isSel ? null : key)}
+              title={evs.map(e => e.title).join('\n') || undefined}
+            >
+              {day}
+              {dotColor && <span className="mc-dot" style={{ background: dotColor }} />}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function fmtDate(key) {
-  if (!key) return ''
-  const d = new Date(key + 'T00:00:00')
-  return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-}
-
+// ── Main Component ───────────────────────────────────────────────────────────
 export default function Calendar({ data }) {
   const calendarEvents = data?.calendarEvents || []
   const employees      = data?.employees      || []
 
-  const [year, setYear]               = useState(new Date().getFullYear())
+  const now      = new Date()
+  const thisYear = now.getFullYear()
+  const curMonth = now.getMonth()
+  const nextMonth = (curMonth + 1) % 12
+  const nextMonthYear = nextMonth === 0 ? thisYear + 1 : thisYear
+
+  const [year,         setYear]         = useState(thisYear)
+  const [activeFilters,setActiveFilters]= useState(new Set())
   const [selectedDate, setSelectedDate] = useState(null)
 
-  const eventMap      = useMemo(() => buildEventMap(calendarEvents, employees, year), [calendarEvents, employees, year])
-  const selectedEvs   = selectedDate ? (eventMap[selectedDate] || []) : []
+  // Event maps
+  const yearMap    = useMemo(() => buildEventMap(calendarEvents, employees, year),    [calendarEvents, employees, year])
+  const curYearMap = useMemo(() => year === thisYear ? yearMap : buildEventMap(calendarEvents, employees, thisYear), [calendarEvents, employees, year, thisYear, yearMap])
 
-  const today    = new Date()
-  const todayStr = today.toISOString().slice(0, 10)
-  const limit    = new Date(today); limit.setDate(today.getDate() + 90)
+  // Upcoming (always from today +90 days)
+  const todayStr = now.toISOString().slice(0, 10)
+  const limit    = new Date(now); limit.setDate(now.getDate() + 90)
   const limitStr = limit.toISOString().slice(0, 10)
 
-  const upcoming = useMemo(() => {
+  const allUpcoming = useMemo(() => {
     const list = []
-    Object.entries(eventMap).forEach(([date, evs]) => {
+    Object.entries(curYearMap).forEach(([date, evs]) => {
       if (date >= todayStr && date <= limitStr)
         evs.forEach(ev => list.push({ date, ...ev }))
     })
     return list.sort((a, b) => a.date.localeCompare(b.date))
-  }, [eventMap, todayStr, limitStr])
+  }, [curYearMap, todayStr, limitStr])
 
-  const totalEvents = Object.values(eventMap).reduce((s, arr) => s + arr.length, 0)
+  const upcoming = useMemo(
+    () => activeFilters.size === 0
+      ? allUpcoming
+      : allUpcoming.filter(ev => activeFilters.has(ev.category)),
+    [allUpcoming, activeFilters]
+  )
+
+  const totalYearEvents = Object.values(yearMap).reduce((s, a) => s + a.length, 0)
+
+  function toggleFilter(key) {
+    setActiveFilters(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
+  const selectedEvs = selectedDate
+    ? (curYearMap[selectedDate] || yearMap[selectedDate] || [])
+    : []
 
   return (
-    <div className="cal-page">
+    <div className="cal2-page">
 
-      {/* ── Page header ── */}
-      <div className="cal-top">
-        <div className="cal-top-left">
-          <h1 className="page-title">Kalender ER</h1>
-          <span className="badge badge-blue">{totalEvents} event tahun ini</span>
-        </div>
-        <div className="cal-top-right">
-          <div className="cal-legend">
-            {Object.entries(CAT).map(([cat, cfg]) => (
-              <span key={cat} className="cal-legend-item">
-                <span className="cal-legend-dot" style={{ background: cfg.color }} />
-                {cfg.label}
-              </span>
-            ))}
+      {/* ══ HEADER ══════════════════════════════════════════════════════════ */}
+      <div className="cal2-header">
+        <div className="cal2-header-left">
+          <div className="cal2-title-row">
+            <h1 className="page-title">Kalender ER</h1>
+            <span className="badge badge-blue">{totalYearEvents} event {year}</span>
           </div>
-          <div className="cal-year-nav">
-            <button className="cal-nav-btn" onClick={() => { setYear(y => y - 1); setSelectedDate(null) }}>‹</button>
-            <span className="cal-year-label">{year}</span>
-            <button className="cal-nav-btn" onClick={() => { setYear(y => y + 1); setSelectedDate(null) }}>›</button>
+          <p className="cal2-subtitle">
+            90 hari ke depan &bull; <strong>{allUpcoming.length}</strong> event upcoming
+          </p>
+        </div>
+        <div className="cal2-header-right">
+          <div className="cal2-filters">
+            {FILTERS.map(({ key, label }) => {
+              const cfg    = CAT[key]
+              const active = activeFilters.has(key)
+              return (
+                <button
+                  key={key}
+                  className={`cal2-filter ${active ? 'cal2-filter-on' : ''}`}
+                  style={active
+                    ? { background: cfg.color, borderColor: cfg.color, color: '#fff' }
+                    : { borderColor: cfg.color, color: cfg.color }}
+                  onClick={() => toggleFilter(key)}
+                >
+                  <span className="cal2-filter-dot" style={{ background: active ? 'rgba(255,255,255,0.8)' : cfg.color }} />
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+          <div className="cal2-year-nav">
+            <button className="cal2-nav-btn" onClick={() => { setYear(y => y - 1); setSelectedDate(null) }}>‹</button>
+            <span className="cal2-year-lbl">{year}</span>
+            <button className="cal2-nav-btn" onClick={() => { setYear(y => y + 1); setSelectedDate(null) }}>›</button>
           </div>
         </div>
       </div>
 
-      {/* ── 12-month grid ── */}
-      <div className="cal-grid">
-        {Array.from({ length: 12 }, (_, i) => (
-          <MonthCard
-            key={i}
-            year={year}
-            monthIdx={i}
-            eventMap={eventMap}
+      {/* ══ MAIN 2-COLUMN GRID ══════════════════════════════════════════════ */}
+      <div className="cal2-main">
+
+        {/* LEFT: Upcoming Events */}
+        <div className="cal2-left">
+          <div className="cal2-panel-hdr">
+            <span className="cal2-panel-title">UPCOMING EVENTS</span>
+            <span className="cal2-panel-sub">90 hari ke depan</span>
+          </div>
+
+          {upcoming.length === 0 ? (
+            <div className="cal2-empty">
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🗓️</div>
+              <p>Tidak ada event dalam 90 hari ke depan</p>
+              {activeFilters.size > 0 && (
+                <button className="cal2-clear-filter" onClick={() => setActiveFilters(new Set())}>
+                  Hapus filter
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="cal2-ev-list">
+              {upcoming.map((ev, i) => {
+                const cfg = CAT[ev.category] || CAT.company
+                const d   = new Date(ev.date + 'T00:00:00')
+                const sel = selectedDate === ev.date
+                return (
+                  <div
+                    key={`${ev.date}-${i}`}
+                    className={`cal2-ev-row${sel ? ' cal2-ev-sel' : ''}`}
+                    style={{ animationDelay: `${i * 0.04}s` }}
+                    onClick={() => setSelectedDate(sel ? null : ev.date)}
+                  >
+                    {/* Date badge */}
+                    <div className="cal2-ev-datebadge" style={{ background: cfg.bg, borderColor: cfg.color }}>
+                      <span className="cal2-ev-day"  style={{ color: cfg.color }}>{d.getDate()}</span>
+                      <span className="cal2-ev-mon"  style={{ color: cfg.color }}>{MONTHS_ID[d.getMonth()].slice(0,3).toUpperCase()}</span>
+                    </div>
+                    {/* Content */}
+                    <div className="cal2-ev-content">
+                      <div className="cal2-ev-title">{ev.title}</div>
+                      <div className="cal2-ev-meta">
+                        <span className="cal2-ev-type">{cfg.label}</span>
+                        <span className="cal2-ev-badge" style={{ background: cfg.bg, color: cfg.color }}>
+                          {cfg.badge}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Countdown */}
+                    <div className="cal2-ev-countdown">{countdown(ev.date)}</div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT: Mini Calendars */}
+        <div className="cal2-right">
+
+          <MiniCalendar
+            year={thisYear}
+            monthIdx={curMonth}
+            eventMap={curYearMap}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
           />
-        ))}
+
+          <div className="cal2-divider" />
+
+          <MiniCalendar
+            year={nextMonthYear}
+            monthIdx={nextMonth}
+            eventMap={curYearMap}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+
+          {/* Year nav (bottom of right panel) */}
+          <div className="cal2-right-year">
+            <button className="cal2-nav-btn" onClick={() => { setYear(y => y - 1); setSelectedDate(null) }}>‹</button>
+            <span className="cal2-year-lbl">{year}</span>
+            <button className="cal2-nav-btn" onClick={() => { setYear(y => y + 1); setSelectedDate(null) }}>›</button>
+          </div>
+
+          {/* Selected date detail */}
+          {selectedDate && selectedEvs.length > 0 && (
+            <div className="cal2-detail">
+              <div className="cal2-detail-hdr">
+                <span className="cal2-detail-date">
+                  {new Date(selectedDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
+                </span>
+                <button className="cal2-detail-close" onClick={() => setSelectedDate(null)}>✕</button>
+              </div>
+              {selectedEvs.map((ev, i) => {
+                const cfg = CAT[ev.category] || CAT.company
+                return (
+                  <div key={i} className="cal2-detail-ev" style={{ borderLeftColor: cfg.color }}>
+                    <span className="cal2-ev-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.badge}</span>
+                    <span className="cal2-detail-ev-name">{ev.title}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* ── Selected date panel ── */}
-      {selectedDate && selectedEvs.length > 0 && (
-        <div className="cal-detail-panel">
-          <div className="cal-detail-hdr">
-            <span className="cal-detail-date">{fmtDate(selectedDate)}</span>
-            <button className="cal-detail-close" onClick={() => setSelectedDate(null)}>✕</button>
-          </div>
-          <div className="cal-detail-events">
-            {selectedEvs.map((ev, i) => {
-              const cfg = CAT[ev.category] || CAT.event
-              return (
-                <div key={i} className="cal-ev-row" style={{ borderLeftColor: cfg.color }}>
-                  <span className="cal-ev-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
-                  <span className="cal-ev-title">{ev.title}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Upcoming events ── */}
-      {upcoming.length > 0 && (
-        <div className="card cal-upcoming">
-          <div className="cal-upcoming-hdr">
-            <span className="cal-upcoming-title">Upcoming Events</span>
-            <span className="cal-upcoming-sub">90 hari ke depan · {upcoming.length} event</span>
-          </div>
-          <div className="cal-upcoming-list">
-            {upcoming.map((ev, i) => {
-              const cfg     = CAT[ev.category] || CAT.event
-              const d       = new Date(ev.date + 'T00:00:00')
-              const dayDiff = Math.round((d - today) / 86400000)
-              return (
-                <div key={i} className="cal-up-item">
-                  <div className="cal-up-datecol">
-                    <div className="cal-up-day">{d.getDate()}</div>
-                    <div className="cal-up-mon">{MONTHS_ID[d.getMonth()].slice(0, 3)}</div>
-                  </div>
-                  <div className="cal-up-body">
-                    <span className="cal-ev-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
-                    <div className="cal-up-name">{ev.title}</div>
-                  </div>
-                  <div className="cal-up-countdown">
-                    {dayDiff === 0
-                      ? <span className="cal-countdown-today">Hari Ini</span>
-                      : dayDiff === 1
-                        ? <span className="cal-countdown-soon">Besok</span>
-                        : <span className="cal-countdown-days">{dayDiff}h lagi</span>}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

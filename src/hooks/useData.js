@@ -128,9 +128,9 @@ const CAL_UNDATED = {
 
 function calCategory(title) {
   if (/ulang.?tahun|birthday|ultah/i.test(title)) return 'birthday'
-  if (/hari raya|idul|lebaran|natal|paskah|waisak|nyepi|imlek|isra mi|maulid|tahun baru islam/i.test(title)) return 'holiday'
-  if (/hari (nasional|kemerdekaan|kartini|buruh|pendidikan|pahlawan|ayah|ibu|pancasila|olahraga|pertambangan|batik|kesehatan|kesaktian)|kenaikan yesus|ramadhan/i.test(title)) return 'national'
-  return 'event'
+  if (/isra|maulid|idul|ramadhan|puasa|tahun baru islam|paskah|kenaikan yesus|waisak|nyepi|jum.?at agung|natal/i.test(title)) return 'religious'
+  if (/hastari|anniversary|health.?fest|k3|olahraga nasional|kesehatan mental|pertambangan/i.test(title)) return 'company'
+  return 'holiday'
 }
 
 function parseCalendarEvents(rows) {
