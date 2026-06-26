@@ -3,8 +3,35 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import './Dashboard.css'
 
 const ENTITY_COLORS = {
-  HAI:'#FF3B30', HAP:'#007AFF', ASI:'#34C759',
-  BPN:'#FF9500', CMS:'#AF52DE', IAS:'#FF2D55', HPA:'#5AC8FA',
+  HAI:'#CC1010', HAP:'#007AFF', ASI:'#E8A000',
+  BPN:'#2B5CE6', CMS:'#6B4F2A', IAS:'#2E7D32', HPA:'#0091A8',
+}
+
+const BASE = import.meta.env.BASE_URL
+const ENTITY_LOGOS = {
+  HAI: `${BASE}logos/HAI.png`,
+  HAP: `${BASE}logos/HAP.png`,
+  ASI: `${BASE}logos/ASI.png`,
+  BPN: `${BASE}logos/BPN.png`,
+  CMS: `${BASE}logos/CMS.png`,
+  IAS: `${BASE}logos/IAS.png`,
+  HPA: `${BASE}logos/HPA.png`,
+}
+
+function EntityLegend({ data }) {
+  return (
+    <div className="entity-legend">
+      {data.map(({ name, value }) => (
+        <div key={name} className="entity-legend-item">
+          {ENTITY_LOGOS[name]
+            ? <img src={ENTITY_LOGOS[name]} alt={name} className="entity-legend-logo" />
+            : <span className="entity-legend-dot" style={{ background: ENTITY_COLORS[name] || '#8E8E93' }} />}
+          <span className="entity-legend-name">{name}</span>
+          <span className="entity-legend-count">{value}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function parseRp(str) {
@@ -100,9 +127,9 @@ export default function Dashboard({ data }) {
       <div className="charts-row">
         <div className="card chart-box">
           <p className="chart-title">Karyawan per Entitas</p>
-          <ResponsiveContainer width="100%" height={230}>
+          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} innerRadius={40}
+              <Pie data={pieData} cx="50%" cy="50%" outerRadius={75} innerRadius={36}
                 dataKey="value" paddingAngle={3}>
                 {pieData.map(e=>(
                   <Cell key={e.name} fill={ENTITY_COLORS[e.name]||'#8E8E93'} />
@@ -110,9 +137,9 @@ export default function Dashboard({ data }) {
               </Pie>
               <Tooltip formatter={(v,n)=>[`${v} orang`,n]}
                 contentStyle={{ borderRadius:10, border:'1px solid var(--border)', fontSize:13 }} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize:12 }} />
             </PieChart>
           </ResponsiveContainer>
+          <EntityLegend data={pieData} />
         </div>
 
         <div className="card chart-box">
@@ -140,7 +167,11 @@ export default function Dashboard({ data }) {
           <div className="birthday-grid">
             {birthdays.map((e,i)=>(
               <div className="birthday-chip" key={i}>
-                <div className="bd-avatar">{e.nama.charAt(0)}</div>
+                <div className="bd-avatar">
+                  {ENTITY_LOGOS[e.entity]
+                    ? <img src={ENTITY_LOGOS[e.entity]} alt={e.entity} className="bd-entity-logo" />
+                    : e.nama.charAt(0)}
+                </div>
                 <div>
                   <div className="bd-name">{e.nama}</div>
                   <div className="bd-meta">{e.entity} · {e.birthDate}</div>

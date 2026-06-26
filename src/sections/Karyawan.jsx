@@ -3,8 +3,19 @@ import { Search } from 'lucide-react'
 import './Karyawan.css'
 
 const ENTITY_COLORS = {
-  HAI:'#FF3B30',HAP:'#007AFF',ASI:'#34C759',
-  BPN:'#FF9500',CMS:'#AF52DE',IAS:'#FF2D55',HPA:'#5AC8FA',
+  HAI:'#CC1010', HAP:'#007AFF', ASI:'#E8A000',
+  BPN:'#2B5CE6', CMS:'#6B4F2A', IAS:'#2E7D32', HPA:'#0091A8',
+}
+
+const BASE = import.meta.env.BASE_URL
+const ENTITY_LOGOS = {
+  HAI: `${BASE}logos/HAI.png`,
+  HAP: `${BASE}logos/HAP.png`,
+  ASI: `${BASE}logos/ASI.png`,
+  BPN: `${BASE}logos/BPN.png`,
+  CMS: `${BASE}logos/CMS.png`,
+  IAS: `${BASE}logos/IAS.png`,
+  HPA: `${BASE}logos/HPA.png`,
 }
 const LEVEL_COLORS = {
   DIRECTOR:'var(--red)',MANAGER:'var(--blue)',
@@ -48,8 +59,11 @@ export default function Karyawan({ data }) {
           {entities.map(en=>(
             <button key={en}
               className={`entity-pill ${entity===en?'active':''}`}
-              style={entity===en&&en!=='Semua' ? { background:ENTITY_COLORS[en], borderColor:ENTITY_COLORS[en] } : {}}
+              style={entity===en&&en!=='Semua' ? { borderColor:ENTITY_COLORS[en], color:ENTITY_COLORS[en] } : {}}
               onClick={()=>setEntity(en)}>
+              {ENTITY_LOGOS[en] && (
+                <img src={ENTITY_LOGOS[en]} alt={en} className="entity-pill-logo" />
+              )}
               {en}
             </button>
           ))}
@@ -81,11 +95,12 @@ export default function Karyawan({ data }) {
                 </td>
                 <td style={{fontSize:12,color:'var(--blue)'}}>{e.email||'—'}</td>
                 <td>
-                  <span style={{
-                    display:'inline-block',padding:'2px 9px',borderRadius:20,
-                    fontSize:11,fontWeight:700,color:'white',
-                    background:ENTITY_COLORS[e.entity]||'#8E8E93'
-                  }}>{e.entity}</span>
+                  <span className="entity-badge" style={{ borderColor: ENTITY_COLORS[e.entity]||'#8E8E93', color: ENTITY_COLORS[e.entity]||'#8E8E93' }}>
+                    {ENTITY_LOGOS[e.entity] && (
+                      <img src={ENTITY_LOGOS[e.entity]} alt={e.entity} className="entity-badge-logo" />
+                    )}
+                    {e.entity}
+                  </span>
                 </td>
               </tr>
             ))}
