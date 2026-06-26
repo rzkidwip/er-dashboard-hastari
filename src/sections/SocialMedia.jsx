@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react'
 import {
-  ExternalLink, Eye, Heart, Share2, TrendingUp, Film, Grid,
+  ExternalLink, Eye, TrendingUp, Film, Grid,
   FileText, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-  Award, Zap, AtSign, Calendar,
+  Users, Smartphone, Search, Calendar, AtSign,
 } from 'lucide-react'
 import {
-  LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, Tooltip,
+  AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import './SocialMedia.css'
 
-// ─── Config ─────────────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const ACCOUNTS = [
   {
@@ -34,31 +34,35 @@ const ACCOUNTS = [
 ]
 
 const TYPE_CFG = {
-  Reels:    { color: '#7C3AED', bg: '#F5F3FF', icon: Film },
-  Carousel: { color: '#3B82F6', bg: '#EFF6FF', icon: Grid },
+  Reels:    { color: '#7C3AED', bg: '#F5F3FF', icon: Film     },
+  Carousel: { color: '#3B82F6', bg: '#EFF6FF', icon: Grid     },
   Post:     { color: '#6B7280', bg: '#F3F4F6', icon: FileText },
 }
 
-const CHART_METRICS = [
-  { value: 'reach',  label: 'Reach',  color: '#7C3AED' },
-  { value: 'views',  label: 'Views',  color: '#3B82F6' },
-  { value: 'likes',  label: 'Likes',  color: '#EF4444' },
-  { value: 'shares', label: 'Shares', color: '#10B981' },
+const TYPE_COLORS = { Reels: '#7C3AED', Carousel: '#3B82F6', Post: '#6B7280' }
+
+const MONTHS_ID  = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des']
+const HEATMAP_WEEKS = 16
+const CI_PAGE_SIZE  = 12
+
+const GROWTH_LINES = [
+  { key: 'reach',      label: 'Reach',      color: '#3B82F6' },
+  { key: 'views',      label: 'Views',      color: '#10B981' },
+  { key: 'engagement', label: 'Engagement', color: '#F59E0B' },
 ]
 
-const TABLE_COLS = [
-  { key: 'postDate',       label: 'Tanggal', align: 'left'  },
-  { key: 'postType',       label: 'Tipe',    align: 'left'  },
-  { key: 'reach',          label: 'Reach',   align: 'right' },
-  { key: 'views',          label: 'Views',   align: 'right' },
-  { key: 'likes',          label: 'Likes',   align: 'right' },
-  { key: 'shares',         label: 'Shares',  align: 'right' },
-  { key: 'engagementRate', label: 'ER %',    align: 'right' },
+const CI_COLS = [
+  { key: 'postType',       label: 'Tipe',    sortable: true  },
+  { key: 'postDate',       label: 'Tanggal', sortable: true  },
+  { key: 'caption',        label: 'Caption', sortable: false },
+  { key: 'reach',          label: 'Reach',   sortable: true  },
+  { key: 'views',          label: 'Views',   sortable: true  },
+  { key: 'likes',          label: 'Likes',   sortable: true  },
+  { key: 'shares',         label: 'Shares',  sortable: true  },
+  { key: 'engagementRate', label: 'ER%',     sortable: true  },
 ]
 
-const PAGE_SIZE = 10
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const normType = t => {
   if (!t) return 'Post'
@@ -73,14 +77,13 @@ const fmtDate = d => {
   const parts = d.split('/')
   if (parts.length < 3) return d
   const [dd, mm, yy] = parts
-  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des']
   const yr = yy.length === 2 ? '20' + yy : yy
-  return `${parseInt(dd, 10)} ${months[parseInt(mm, 10) - 1] ?? ''} ${yr}`
+  return `${parseInt(dd, 10)} ${MONTHS_ID[parseInt(mm, 10) - 1] ?? ''} ${yr}`
 }
 
 const dateToMs = d => {
   if (!d) return 0
-  const [dd, mm, yy] = d.split('/')
+  const [dd, mm, yy] = (d || '').split('/')
   if (!dd || !mm || !yy) return 0
   const yr = yy.length === 2 ? '20' + yy : yy
   return new Date(Number(yr), Number(mm) - 1, Number(dd)).getTime() || 0
@@ -101,21 +104,26 @@ const calcER = a => {
 
 const getAccCfg = name => ACCOUNTS.find(a => a.name === name) ?? ACCOUNTS[0]
 
-// ─── Shared: Account Tab Bar ─────────────────────────────────────────────────
+const erBadgeStyle = er => ({
+  background: er >= 5 ? '#DCFCE7' : er >= 2 ? '#FEF9C3' : '#FEE2E2',
+  color:      er >= 5 ? '#166534' : er >= 2 ? '#713F12' : '#991B1B',
+})
+
+// ─── Account Tab Bar ──────────────────────────────────────────────────────────
 
 function AccountTabBar({ selected, onChange }) {
   return (
-    <div className="sm2-acc-tabs" role="tablist" aria-label="Account selector">
+    <div className="sm3-acc-tabs" role="tablist">
       {ACCOUNTS.map(acc => (
         <button
           key={acc.name}
           role="tab"
           aria-selected={selected === acc.name}
-          className={`sm2-acc-tab ${selected === acc.name ? 'active' : ''}`}
+          className={`sm3-acc-tab ${selected === acc.name ? 'active' : ''}`}
           style={selected === acc.name ? { '--c': acc.primary } : {}}
           onClick={() => onChange(acc.name)}
         >
-          <span className="sm2-acc-dot" style={{ background: acc.primary }} aria-hidden="true" />
+          <span className="sm3-acc-dot" style={{ background: acc.primary }} />
           {acc.handle}
         </button>
       ))}
@@ -123,737 +131,689 @@ function AccountTabBar({ selected, onChange }) {
   )
 }
 
-// ─── SECTION 1: CONTENT PLANNER ──────────────────────────────────────────────
+// ─── KPI Cards ────────────────────────────────────────────────────────────────
 
-function HeroCard({ accCfg, analytics }) {
-  const totals = useMemo(() =>
-    analytics.reduce((t, a) => ({
-      reach:  t.reach  + (Number(a.reach)  || 0),
-      views:  t.views  + (Number(a.views)  || 0),
-      likes:  t.likes  + (Number(a.likes)  || 0),
-      shares: t.shares + (Number(a.shares) || 0),
-    }), { reach: 0, views: 0, likes: 0, shares: 0 }),
-  [analytics])
+function trendForField(analytics, field) {
+  const now = new Date()
+  const cy = now.getFullYear(), cm = now.getMonth()
+  let cur = 0, prev = 0
+  analytics.forEach(a => {
+    const ms = dateToMs(a.postDate)
+    if (!ms) return
+    const d = new Date(ms)
+    const val = field === 'count' ? 1 : (Number(a[field]) || 0)
+    if (d.getFullYear() === cy && d.getMonth() === cm) {
+      cur += val
+    } else if (
+      (cm > 0  && d.getFullYear() === cy     && d.getMonth() === cm - 1) ||
+      (cm === 0 && d.getFullYear() === cy - 1 && d.getMonth() === 11)
+    ) {
+      prev += val
+    }
+  })
+  return { cur, prev, pct: prev > 0 ? ((cur - prev) / prev) * 100 : null }
+}
 
-  const latest = useMemo(() =>
-    [...analytics].sort((a, b) => dateToMs(b.postDate) - dateToMs(a.postDate))[0],
-  [analytics])
+function KPICard({ icon: Icon, label, value, pct, color }) {
+  const up = pct !== null && pct >= 0
+  return (
+    <div className="sm3-kpi" style={{ '--kc': color }}>
+      <div className="sm3-kpi-top">
+        <div className="sm3-kpi-icon-wrap"><Icon size={18} color={color} /></div>
+        {pct !== null && (
+          <span className={`sm3-kpi-trend ${up ? 'up' : 'dn'}`}>
+            {up ? '↑' : '↓'} {Math.abs(pct).toFixed(1)}%
+          </span>
+        )}
+      </div>
+      <div className="sm3-kpi-val" style={{ color }}>{value}</div>
+      <div className="sm3-kpi-lbl">{label}</div>
+      {pct !== null && (
+        <div className="sm3-kpi-sub">{up ? '+' : ''}{pct.toFixed(1)}% this month</div>
+      )}
+    </div>
+  )
+}
 
-  const avgReach = analytics.length ? Math.round(totals.reach / analytics.length) : 0
+function KPICards({ analytics, summary, accCfg }) {
+  const postT  = useMemo(() => trendForField(analytics, 'count'), [analytics])
+  const reachT = useMemo(() => trendForField(analytics, 'reach'), [analytics])
+  const viewsT = useMemo(() => trendForField(analytics, 'views'), [analytics])
 
-  const metrics = [
-    { label: 'Total Reach',  val: fmtNum(totals.reach),  icon: TrendingUp, color: accCfg.primary },
-    { label: 'Total Views',  val: fmtNum(totals.views),  icon: Eye,        color: '#6366F1'       },
-    { label: 'Total Likes',  val: fmtNum(totals.likes),  icon: Heart,      color: '#EF4444'       },
-    { label: 'Total Shares', val: fmtNum(totals.shares), icon: Share2,     color: '#10B981'       },
-  ]
+  const followers = useMemo(() => {
+    const s = summary?.find(s => s.account === accCfg.name)
+    return s ? Number((s.totalFollowers || '0').toString().replace(/,/g, '')) : null
+  }, [summary, accCfg])
+
+  const totalReach = analytics.reduce((s, a) => s + (Number(a.reach) || 0), 0)
+  const totalViews = analytics.reduce((s, a) => s + (Number(a.views) || 0), 0)
 
   return (
-    <div className="sm2-hero">
-      <div className="sm2-hero-header" style={{ background: accCfg.grad }}>
-        <div className="sm2-hero-identity">
-          <div className="sm2-hero-avatar" aria-hidden="true">
-            <AtSign size={22} color="white" />
+    <div className="sm3-kpi-row">
+      <KPICard icon={Smartphone} label="Total Posts"  value={analytics.length}                     pct={postT.pct}  color={accCfg.primary} />
+      <KPICard icon={Users}      label="Followers"    value={followers ? fmtNum(followers) : '—'}  pct={null}       color="#10B981" />
+      <KPICard icon={TrendingUp} label="Total Reach"  value={fmtNum(totalReach)}                   pct={reachT.pct} color="#7C3AED" />
+      <KPICard icon={Eye}        label="Total Views"  value={fmtNum(totalViews)}                   pct={viewsT.pct} color="#3B82F6" />
+    </div>
+  )
+}
+
+// ─── Heatmap ──────────────────────────────────────────────────────────────────
+
+function HeatmapSection({ analytics }) {
+  const today = useMemo(() => new Date(), [])
+  const [tooltip, setTooltip] = useState(null)
+
+  const dayMap = useMemo(() => {
+    const map = {}
+    const cutoff = new Date(today)
+    cutoff.setDate(today.getDate() - HEATMAP_WEEKS * 7)
+    analytics.forEach(a => {
+      const ms = dateToMs(a.postDate)
+      if (!ms || ms < cutoff.getTime()) return
+      const d   = new Date(ms)
+      const key = d.toISOString().slice(0, 10)
+      if (!map[key]) map[key] = { count: 0, reach: 0 }
+      map[key].count++
+      map[key].reach += Number(a.reach) || 0
+    })
+    return map
+  }, [analytics, today])
+
+  const maxReach = useMemo(() =>
+    Math.max(1, ...Object.values(dayMap).map(v => v.reach)),
+  [dayMap])
+
+  const cells = useMemo(() => {
+    const result = []
+    const startDay = new Date(today)
+    const dow = startDay.getDay()
+    const daysBack = ((dow === 0 ? 7 : dow) - 1) + (HEATMAP_WEEKS - 1) * 7
+    startDay.setDate(today.getDate() - daysBack)
+    for (let w = 0; w < HEATMAP_WEEKS; w++) {
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(startDay)
+        date.setDate(startDay.getDate() + w * 7 + d)
+        const key  = date.toISOString().slice(0, 10)
+        result.push({ date, key, info: dayMap[key] || null, col: w, row: d })
+      }
+    }
+    return result
+  }, [today, dayMap])
+
+  const weekLabels = useMemo(() =>
+    Array.from({ length: HEATMAP_WEEKS }, (_, w) => {
+      const cell = cells[w * 7]
+      return cell && cell.date.getDate() <= 7 ? MONTHS_ID[cell.date.getMonth()] : ''
+    }),
+  [cells])
+
+  const heatColor = reach => {
+    const r = reach / maxReach
+    if (r === 0)    return '#F3F4F6'
+    if (r < 0.25)   return '#DDD6FE'
+    if (r < 0.5)    return '#A78BFA'
+    if (r < 0.75)   return '#7C3AED'
+    return '#5B21B6'
+  }
+
+  return (
+    <div className="sm3-card sm3-card--overflow">
+      <h3 className="sm3-card-title">Audience Activity</h3>
+      <div className="sm3-hm-wrap">
+        <div className="sm3-hm-week-labels">
+          {weekLabels.map((lbl, i) => <span key={i} className="sm3-hm-mlbl">{lbl}</span>)}
+        </div>
+        <div className="sm3-hm-body">
+          <div className="sm3-hm-day-labels">
+            {['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(d => (
+              <span key={d} className="sm3-hm-dlbl">{d}</span>
+            ))}
           </div>
-          <div>
-            <div className="sm2-hero-name">{accCfg.name}</div>
-            <div className="sm2-hero-handle">{accCfg.handle} · Instagram</div>
+          <div
+            className="sm3-hm-grid"
+            style={{ '--cols': HEATMAP_WEEKS }}
+            onMouseLeave={() => setTooltip(null)}
+          >
+            {cells.map(cell => (
+              <div
+                key={cell.key}
+                className="sm3-hm-cell"
+                style={{
+                  background:  heatColor(cell.info?.reach ?? 0),
+                  gridColumn:  cell.col + 1,
+                  gridRow:     cell.row + 1,
+                  opacity:     cell.date > today ? 0.25 : 1,
+                }}
+                onMouseEnter={e => cell.info && setTooltip({
+                  x: e.clientX, y: e.clientY,
+                  date: cell.key, count: cell.info.count, reach: cell.info.reach,
+                })}
+              />
+            ))}
           </div>
         </div>
-        <div className="sm2-hero-counters">
-          <div className="sm2-hero-counter">
-            <div className="sm2-hero-counter-val">{analytics.length}</div>
-            <div className="sm2-hero-counter-lbl">Total Posts</div>
-          </div>
-          <div className="sm2-hero-counter">
-            <div className="sm2-hero-counter-val">{fmtNum(avgReach)}</div>
-            <div className="sm2-hero-counter-lbl">Avg Reach</div>
-          </div>
+        <div className="sm3-hm-legend">
+          <span className="sm3-hm-legend-lbl">Less</span>
+          {['#F3F4F6','#DDD6FE','#A78BFA','#7C3AED','#5B21B6'].map(c => (
+            <div key={c} className="sm3-hm-legend-cell" style={{ background: c }} />
+          ))}
+          <span className="sm3-hm-legend-lbl">More</span>
         </div>
       </div>
-
-      <div className="sm2-hero-metrics">
-        {metrics.map(m => (
-          <div key={m.label} className="sm2-hero-metric">
-            <div className="sm2-hero-metric-icon" style={{ background: m.color + '18' }} aria-hidden="true">
-              <m.icon size={14} color={m.color} />
-            </div>
-            <div className="sm2-hero-metric-val" style={{ color: m.color }}>{m.val}</div>
-            <div className="sm2-hero-metric-lbl">{m.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {latest && (
-        <div className="sm2-hero-latest" style={{ borderColor: accCfg.border }}>
-          <Calendar size={11} color={accCfg.primary} aria-hidden="true" />
-          <span className="sm2-hero-latest-tag" style={{ color: accCfg.primary }}>Post Terbaru</span>
-          <span className="sm2-hero-latest-info">
-            {fmtDate(latest.postDate)} · {normType(latest.postType)}
-          </span>
-          <span className="sm2-hero-latest-reach" style={{ color: accCfg.primary }}>
-            {fmtNum(Number(latest.reach) || 0)} reach
-          </span>
-          {latest.link && (
-            <a href={latest.link} target="_blank" rel="noreferrer"
-               className="sm2-hero-latest-link" style={{ color: accCfg.primary }}
-               aria-label="View latest post">
-              <ExternalLink size={11} aria-hidden="true" /> Lihat
-            </a>
-          )}
+      {tooltip && (
+        <div className="sm3-hm-tooltip" style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}>
+          <strong>{tooltip.date}</strong>
+          <span>{tooltip.count} post{tooltip.count !== 1 ? 's' : ''}</span>
+          <span>Reach: {fmtFull(tooltip.reach)}</span>
         </div>
       )}
     </div>
   )
 }
 
-function PostCard({ post, accCfg }) {
-  const type    = normType(post.postType)
-  const typeCfg = TYPE_CFG[type] ?? TYPE_CFG.Post
-  const Icon    = typeCfg.icon
-  const er      = calcER(post)
+// ─── Growth Chart ─────────────────────────────────────────────────────────────
+
+function GrowthChart({ analytics }) {
+  const [active, setActive] = useState(GROWTH_LINES.map(l => l.key))
+
+  const chartData = useMemo(() => {
+    const byMonth = {}
+    analytics.forEach(a => {
+      const ms = dateToMs(a.postDate)
+      if (!ms) return
+      const d   = new Date(ms)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const lbl = `${MONTHS_ID[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`
+      if (!byMonth[key]) byMonth[key] = { month: key, label: lbl, reach: 0, views: 0, engagement: 0 }
+      byMonth[key].reach      += Number(a.reach)  || 0
+      byMonth[key].views      += Number(a.views)  || 0
+      byMonth[key].engagement += (Number(a.likes) || 0) + (Number(a.shares) || 0)
+    })
+    return Object.values(byMonth).sort((a, b) => a.month.localeCompare(b.month))
+  }, [analytics])
+
+  const toggle = key => setActive(prev =>
+    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+  )
 
   return (
-    <article className="sm2-post-card" style={{ '--acc': accCfg.primary }}>
-      <div className="sm2-post-card-band" style={{ background: accCfg.grad }} />
-
-      <div className="sm2-post-card-inner">
-        <div className="sm2-post-card-head">
-          <span className="sm2-type-badge" style={{ color: typeCfg.color, background: typeCfg.bg }}>
-            <Icon size={10} aria-hidden="true" /> {type}
-          </span>
-          <span className="sm2-post-date">
-            <Calendar size={10} aria-hidden="true" /> {fmtDate(post.postDate)}
-          </span>
-        </div>
-
-        {post.caption ? (
-          <p className="sm2-post-caption" title={post.caption}>
-            {post.caption.length > 110 ? post.caption.slice(0, 110) + '…' : post.caption}
-          </p>
-        ) : (
-          <p className="sm2-post-caption sm2-post-caption--empty">
-            {normType(post.postType)} · {fmtDate(post.postDate)}
-          </p>
-        )}
-
-        <div className="sm2-post-metrics">
-          <div className="sm2-post-metric">
-            <TrendingUp size={11} color="#7C3AED" aria-hidden="true" />
-            <span>{fmtNum(Number(post.reach) || 0)}</span>
-            <span className="sm2-post-metric-lbl">Reach</span>
-          </div>
-          <div className="sm2-post-metric">
-            <Eye size={11} color="#6366F1" aria-hidden="true" />
-            <span>{fmtNum(Number(post.views) || 0)}</span>
-            <span className="sm2-post-metric-lbl">Views</span>
-          </div>
-          <div className="sm2-post-metric">
-            <Heart size={11} color="#EF4444" aria-hidden="true" />
-            <span>{fmtNum(Number(post.likes) || 0)}</span>
-            <span className="sm2-post-metric-lbl">Likes</span>
-          </div>
-          <div className="sm2-post-metric">
-            <Share2 size={11} color="#10B981" aria-hidden="true" />
-            <span>{fmtNum(Number(post.shares) || 0)}</span>
-            <span className="sm2-post-metric-lbl">Shares</span>
-          </div>
-        </div>
-
-        <div className="sm2-post-card-footer">
-          <span className="sm2-er-pill"
-            style={{
-              background: er >= 5 ? '#DCFCE7' : er >= 2 ? '#FEF9C3' : '#FEE2E2',
-              color:      er >= 5 ? '#166534' : er >= 2 ? '#713F12' : '#991B1B',
-            }}>
-            ER {er.toFixed(1)}%
-          </span>
-          {(post.link || post.contentLink) && (
-            <a
-              href={post.link || post.contentLink}
-              target="_blank"
-              rel="noreferrer"
-              className="sm2-view-btn"
-              style={{ background: accCfg.primary }}
-              aria-label="View post on Instagram"
+    <div className="sm3-card">
+      <div className="sm3-card-head">
+        <h3 className="sm3-card-title">Account Growth</h3>
+        <div className="sm3-legend-row">
+          {GROWTH_LINES.map(l => (
+            <button
+              key={l.key}
+              className={`sm3-legend-btn ${active.includes(l.key) ? 'on' : ''}`}
+              onClick={() => toggle(l.key)}
             >
-              <ExternalLink size={11} aria-hidden="true" /> View Post
-            </a>
-          )}
+              <span className="sm3-legend-dot" style={{ background: active.includes(l.key) ? l.color : '#D1D5DB' }} />
+              {l.label}
+            </button>
+          ))}
         </div>
       </div>
-    </article>
+      <ResponsiveContainer width="100%" height={220}>
+        <AreaChart data={chartData} margin={{ left: 0, right: 12, bottom: 24, top: 8 }}>
+          <defs>
+            {GROWTH_LINES.map(l => (
+              <linearGradient key={l.key} id={`smgrad-${l.key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={l.color} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={l.color} stopOpacity={0.01} />
+              </linearGradient>
+            ))}
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#9CA3AF' }} angle={-25} textAnchor="end" height={50} />
+          <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} width={50} tickFormatter={v => fmtNum(v)} />
+          <Tooltip
+            contentStyle={{ borderRadius: 10, border: '1px solid #E5E7EB', fontSize: 12 }}
+            formatter={(v, name) => [fmtFull(v), GROWTH_LINES.find(l => l.key === name)?.label ?? name]}
+          />
+          {GROWTH_LINES.map(l => active.includes(l.key) && (
+            <Area
+              key={l.key}
+              type="monotone"
+              dataKey={l.key}
+              stroke={l.color}
+              strokeWidth={2.5}
+              fill={`url(#smgrad-${l.key})`}
+              dot={false}
+              activeDot={{ r: 4, strokeWidth: 0 }}
+              animationDuration={500}
+            />
+          ))}
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
 
-const SORT_OPTS = [
-  { value: 'date',       label: 'Date (Newest)' },
-  { value: 'reach',      label: 'Reach'         },
-  { value: 'likes',      label: 'Likes'         },
-  { value: 'engagement', label: 'Engagement Rate' },
-]
+// ─── Content Insights ─────────────────────────────────────────────────────────
 
-function ContentPlannerSection({ posts, analytics, accCfg }) {
-  const [types,  setTypes]  = useState([])
-  const [sortBy, setSortBy] = useState('date')
+function mergePostsAnalytics(posts, analytics) {
+  const anaMap = {}
+  analytics.forEach(a => {
+    const k = `${a.postDate}|${normType(a.postType)}`
+    if (!anaMap[k]) anaMap[k] = a
+  })
+  const source = posts.length > 0 ? posts : analytics
+  return source.map(p => {
+    const k      = `${p.postDate}|${normType(p.postType)}`
+    const a      = anaMap[k] || {}
+    const reach  = Number(a.reach  ?? p.reach  ?? 0)
+    const views  = Number(a.views  ?? p.views  ?? 0)
+    const likes  = Number(a.likes  ?? p.likes  ?? 0)
+    const shares = Number(a.shares ?? p.shares ?? 0)
+    return {
+      ...p,
+      _type: normType(p.postType),
+      _ms:   dateToMs(p.postDate),
+      reach, views, likes, shares,
+      engagementRate: reach > 0 ? ((likes + shares) / reach) * 100 : 0,
+      link: a.link || p.contentLink || p.link || '',
+    }
+  })
+}
 
-  const toggleType = t =>
-    setTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+function ContentInsights({ posts, analytics, filterDate, onClearDate }) {
+  const [types,   setTypes]   = useState([])
+  const [search,  setSearch]  = useState('')
+  const [sortCol, setSortCol] = useState('postDate')
+  const [sortDir, setSortDir] = useState('desc')
+  const [page,    setPage]    = useState(0)
 
-  // Merge posts + analytics by matching date+type for per-card metrics
-  const enriched = useMemo(() => {
-    const anaMap = {}
-    analytics.forEach(a => {
-      const k = `${a.postDate}|${normType(a.postType)}`
-      if (!anaMap[k]) anaMap[k] = a
-    })
-    // If no posts data, fall back to analytics
-    const source = posts.length > 0 ? posts : analytics
-    return source.map(p => {
-      const k   = `${p.postDate}|${normType(p.postType)}`
-      const ana = anaMap[k] || {}
-      return {
-        ...p,
-        reach:  ana.reach  ?? p.reach  ?? 0,
-        views:  ana.views  ?? p.views  ?? 0,
-        likes:  ana.likes  ?? p.likes  ?? 0,
-        shares: ana.shares ?? p.shares ?? 0,
-        link:   ana.link   || p.contentLink || p.link || '',
-      }
-    })
-  }, [posts, analytics])
+  const merged = useMemo(() => mergePostsAnalytics(posts, analytics), [posts, analytics])
 
   const filtered = useMemo(() => {
-    let list = enriched
-    if (types.length > 0) list = list.filter(p => types.includes(normType(p.postType)))
+    let list = merged
+    if (types.length)    list = list.filter(p => types.includes(p._type))
+    if (search.trim())   list = list.filter(p => p.caption?.toLowerCase().includes(search.toLowerCase()))
+    if (filterDate)      list = list.filter(p => {
+      if (!p._ms) return false
+      const d = new Date(p._ms)
+      return d.getDate() === filterDate.day && d.getMonth() === filterDate.month && d.getFullYear() === filterDate.year
+    })
     return [...list].sort((a, b) => {
-      if (sortBy === 'date')       return dateToMs(b.postDate) - dateToMs(a.postDate)
-      if (sortBy === 'reach')      return (Number(b.reach) || 0) - (Number(a.reach) || 0)
-      if (sortBy === 'likes')      return (Number(b.likes) || 0) - (Number(a.likes) || 0)
-      if (sortBy === 'engagement') return calcER(b) - calcER(a)
+      let va, vb
+      if      (sortCol === 'postDate')       { va = a._ms;            vb = b._ms            }
+      else if (sortCol === 'engagementRate') { va = a.engagementRate; vb = b.engagementRate }
+      else if (sortCol === 'postType')       { va = a._type;          vb = b._type          }
+      else { va = Number(a[sortCol]) || 0; vb = Number(b[sortCol]) || 0 }
+      if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb||'').toLowerCase() }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ?  1 : -1
       return 0
     })
-  }, [enriched, types, sortBy])
+  }, [merged, types, search, filterDate, sortCol, sortDir])
+
+  const totalPages = Math.ceil(filtered.length / CI_PAGE_SIZE)
+  const pageRows   = filtered.slice(page * CI_PAGE_SIZE, (page + 1) * CI_PAGE_SIZE)
+
+  const doSort = col => {
+    if (!CI_COLS.find(c => c.key === col)?.sortable) return
+    setSortDir(prev => sortCol === col && prev === 'asc' ? 'desc' : 'asc')
+    setSortCol(col)
+    setPage(0)
+  }
+
+  const toggleType = t => { setTypes(p => p.includes(t) ? p.filter(x => x !== t) : [...p, t]); setPage(0) }
 
   return (
-    <div className="sm2-section">
-      <HeroCard accCfg={accCfg} analytics={analytics} />
-
-      <div className="sm2-filter-bar">
-        <div className="sm2-filter-group">
-          <span className="sm2-filter-lbl">Post Type</span>
-          <div className="sm2-pills">
-            {['Reels', 'Carousel', 'Post'].map(t => {
-              const active = types.includes(t)
+    <div className="sm3-card sm3-card--flush">
+      <div className="sm3-ci-head">
+        <h3 className="sm3-card-title">Content Insights</h3>
+        <div className="sm3-ci-controls">
+          <div className="sm3-search-wrap">
+            <Search size={13} className="sm3-search-icon" />
+            <input
+              className="sm3-search"
+              placeholder="Cari caption…"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(0) }}
+            />
+          </div>
+          <div className="sm3-pills">
+            {['Reels','Carousel','Post'].map(t => {
+              const on = types.includes(t)
               const cfg = TYPE_CFG[t]
               return (
                 <button
                   key={t}
-                  className={`sm2-pill ${active ? 'active' : ''}`}
-                  style={active ? { background: cfg.color, borderColor: cfg.color, color: '#fff' } : {}}
+                  className={`sm3-pill ${on ? 'on' : ''}`}
+                  style={on ? { background: cfg.color, borderColor: cfg.color, color: '#fff' } : {}}
                   onClick={() => toggleType(t)}
-                  aria-pressed={active}
                 >
                   {t}
                 </button>
               )
             })}
             {types.length > 0 && (
-              <button className="sm2-pill-clear" onClick={() => setTypes([])}>
-                Clear
-              </button>
+              <button className="sm3-pill-clear" onClick={() => { setTypes([]); setPage(0) }}>✕</button>
             )}
           </div>
         </div>
-
-        <div className="sm2-filter-group">
-          <span className="sm2-filter-lbl">Sort by</span>
-          <select
-            className="sm2-select"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            aria-label="Sort posts"
-          >
-            {SORT_OPTS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <span className="sm2-result-count" aria-live="polite">{filtered.length} posts</span>
       </div>
 
-      <div className="sm2-grid">
-        {filtered.map((p, i) => (
-          <PostCard key={i} post={p} accCfg={accCfg} />
+      {filterDate && (
+        <div className="sm3-date-banner">
+          <Calendar size={12} />
+          Filter: {filterDate.day} {MONTHS_ID[filterDate.month]} {filterDate.year}
+          <button className="sm3-date-clear" onClick={onClearDate}>✕ Hapus</button>
+        </div>
+      )}
+
+      <div className="sm3-table-scroll">
+        <table className="sm3-table">
+          <thead>
+            <tr>
+              {CI_COLS.map(col => (
+                <th
+                  key={col.key}
+                  className={`sm3-th ${col.sortable ? 'sortable' : ''} ${sortCol === col.key ? 'sorted' : ''}`}
+                  onClick={() => doSort(col.key)}
+                >
+                  <span className="sm3-th-inner">
+                    {col.label}
+                    {col.sortable && (
+                      sortCol === col.key
+                        ? (sortDir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />)
+                        : <span className="sm3-sort-n">↕</span>
+                    )}
+                  </span>
+                </th>
+              ))}
+              <th className="sm3-th">Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageRows.map((row, i) => {
+              const tCfg = TYPE_CFG[row._type] ?? TYPE_CFG.Post
+              const Icon = tCfg.icon
+              const bs   = erBadgeStyle(row.engagementRate)
+              return (
+                <tr key={i} className="sm3-tr">
+                  <td className="sm3-td">
+                    <span className="sm3-type-badge" style={{ color: tCfg.color, background: tCfg.bg }}>
+                      <Icon size={10} /> {row._type}
+                    </span>
+                  </td>
+                  <td className="sm3-td sm3-td--date">{fmtDate(row.postDate)}</td>
+                  <td className="sm3-td sm3-td--caption" title={row.caption || ''}>
+                    {row.caption
+                      ? (row.caption.length > 60 ? row.caption.slice(0, 60) + '…' : row.caption)
+                      : <em className="sm3-muted">—</em>}
+                  </td>
+                  <td className="sm3-td sm3-td--num">{fmtFull(row.reach)}</td>
+                  <td className="sm3-td sm3-td--num">{fmtFull(row.views)}</td>
+                  <td className="sm3-td sm3-td--num">{fmtFull(row.likes)}</td>
+                  <td className="sm3-td sm3-td--num">{fmtFull(row.shares)}</td>
+                  <td className="sm3-td sm3-td--num">
+                    <span className="sm3-er-badge" style={bs}>{row.engagementRate.toFixed(1)}%</span>
+                  </td>
+                  <td className="sm3-td">
+                    {row.link && (
+                      <a href={row.link} target="_blank" rel="noreferrer" className="sm3-link-btn" aria-label="View post">
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+            {pageRows.length === 0 && (
+              <tr><td colSpan={9} className="sm3-td sm3-td--empty">Tidak ada data</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="sm3-pagination">
+          <button className="sm3-page-btn" onClick={() => setPage(0)} disabled={page === 0}>«</button>
+          <button className="sm3-page-btn" onClick={() => setPage(p => p - 1)} disabled={page === 0}>‹</button>
+          <span className="sm3-page-info">
+            {page * CI_PAGE_SIZE + 1}–{Math.min((page + 1) * CI_PAGE_SIZE, filtered.length)} / {filtered.length}
+          </span>
+          <button className="sm3-page-btn" onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}>›</button>
+          <button className="sm3-page-btn" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>»</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Mini Calendar ────────────────────────────────────────────────────────────
+
+function MiniCalendar({ posts, selectedDate, onDateSelect }) {
+  const today = useMemo(() => new Date(), [])
+  const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() })
+
+  const postMap = useMemo(() => {
+    const map = {}
+    posts.forEach(p => {
+      const ms = dateToMs(p.postDate)
+      if (!ms) return
+      const d = new Date(ms)
+      if (d.getFullYear() !== view.year || d.getMonth() !== view.month) return
+      const day = d.getDate()
+      if (!map[day]) map[day] = []
+      map[day].push(normType(p.postType))
+    })
+    return map
+  }, [posts, view])
+
+  const firstDow    = new Date(view.year, view.month, 1).getDay()
+  const daysInMonth = new Date(view.year, view.month + 1, 0).getDate()
+  const blanks      = firstDow === 0 ? 6 : firstDow - 1
+
+  const prev = () => setView(v => v.month === 0  ? { year: v.year - 1, month: 11 } : { year: v.year, month: v.month - 1 })
+  const next = () => setView(v => v.month === 11 ? { year: v.year + 1, month: 0  } : { year: v.year, month: v.month + 1 })
+
+  const isToday = d => d === today.getDate() && view.month === today.getMonth() && view.year === today.getFullYear()
+  const isSel   = d => selectedDate?.day === d && selectedDate?.month === view.month && selectedDate?.year === view.year
+
+  return (
+    <div className="sm3-card sm3-cal">
+      <div className="sm3-cal-head">
+        <button className="sm3-cal-nav" onClick={prev}><ChevronLeft size={14} /></button>
+        <span className="sm3-cal-title">{MONTHS_ID[view.month]} {view.year}</span>
+        <button className="sm3-cal-nav" onClick={next}><ChevronRight size={14} /></button>
+      </div>
+      <div className="sm3-cal-grid">
+        {['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(d => (
+          <div key={d} className="sm3-cal-dow">{d}</div>
         ))}
-        {filtered.length === 0 && (
-          <div className="sm2-empty">Tidak ada post yang cocok dengan filter</div>
-        )}
+        {Array.from({ length: blanks }, (_, i) => <div key={`b${i}`} className="sm3-cal-blank" />)}
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const d     = i + 1
+          const types = postMap[d] ? [...new Set(postMap[d])] : []
+          return (
+            <div
+              key={d}
+              className={`sm3-cal-cell ${isToday(d) ? 'today' : ''} ${isSel(d) ? 'sel' : ''} ${types.length ? 'has-post' : ''}`}
+              onClick={() => types.length && (isSel(d) ? onDateSelect(null) : onDateSelect({ day: d, month: view.month, year: view.year }))}
+              title={types.length ? `${postMap[d].length} post${postMap[d].length > 1 ? 's' : ''}` : ''}
+            >
+              <span className="sm3-cal-num">{d}</span>
+              {types.length > 0 && (
+                <div className="sm3-cal-dots">
+                  {types.slice(0, 3).map(t => (
+                    <span key={t} className="sm3-cal-dot" style={{ background: TYPE_COLORS[t] }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-// ─── SECTION 2: SOCIAL MEDIA PERFORMANCE ─────────────────────────────────────
+// ─── Recent Activities ────────────────────────────────────────────────────────
 
-function InsightCard({ icon: Icon, label, value, sub, color, link }) {
-  return (
-    <div className="sm2-insight">
-      <div className="sm2-insight-icon" style={{ background: color + '18' }} aria-hidden="true">
-        <Icon size={16} color={color} />
-      </div>
-      <div className="sm2-insight-body">
-        <div className="sm2-insight-label">{label}</div>
-        <div className="sm2-insight-val" style={{ color }}>{value}</div>
-        <div className="sm2-insight-sub">{sub}</div>
-      </div>
-      {link && (
-        <a href={link} target="_blank" rel="noreferrer"
-           className="sm2-insight-link" aria-label={`View ${label} post`}>
-          <ExternalLink size={12} />
-        </a>
-      )}
-    </div>
-  )
-}
-
-function SortIcon({ col, tableSort }) {
-  if (tableSort.col !== col) return <span className="sm2-sort-neutral" aria-hidden="true">↕</span>
-  return tableSort.dir === 'asc'
-    ? <ChevronUp   size={12} aria-hidden="true" />
-    : <ChevronDown size={12} aria-hidden="true" />
-}
-
-function PerformanceSection({ analytics, accCfg }) {
-  const [chartMetric, setChartMetric] = useState('reach')
-  const [tableSort,   setTableSort]   = useState({ col: 'postDate', dir: 'desc' })
-  const [page,        setPage]        = useState(0)
-
-  const parsed = useMemo(() => analytics.map(a => ({
-    ...a,
-    _reach:  Number(a.reach)  || 0,
-    _views:  Number(a.views)  || 0,
-    _likes:  Number(a.likes)  || 0,
-    _shares: Number(a.shares) || 0,
-    _er:     calcER(a),
-    _ms:     dateToMs(a.postDate),
-    _type:   normType(a.postType),
-  })), [analytics])
-
-  // ── KPIs
-  const kpis = useMemo(() => {
-    const totalReach = parsed.reduce((s, a) => s + a._reach, 0)
-    const totalEng   = parsed.reduce((s, a) => s + a._likes + a._shares, 0)
-    const byType = {}
-    parsed.forEach(a => {
-      byType[a._type] = (byType[a._type] || 0) + a._likes + a._shares
-    })
-    const bestType = Object.entries(byType).sort((x, y) => y[1] - x[1])[0]?.[0] ?? '—'
-    return {
-      posts:    parsed.length,
-      avgReach: parsed.length ? Math.round(totalReach / parsed.length) : 0,
-      totalEng,
-      bestType,
-    }
-  }, [parsed])
-
-  // ── Insights
-  const top = useMemo(() => ({
-    reach:  [...parsed].sort((a, b) => b._reach  - a._reach)[0],
-    likes:  [...parsed].sort((a, b) => b._likes  - a._likes)[0],
-    er:     [...parsed].sort((a, b) => b._er     - a._er)[0],
-    shares: [...parsed].sort((a, b) => b._shares - a._shares)[0],
-  }), [parsed])
-
-  // ── Charts
-  const metricCfg = CHART_METRICS.find(m => m.value === chartMetric) ?? CHART_METRICS[0]
-  const mKey      = `_${chartMetric}`
-
-  const lineData = useMemo(() => {
-    const byDate = {}
-    ;[...parsed].sort((a, b) => a._ms - b._ms).forEach(a => {
-      const d = fmtDate(a.postDate)
-      if (!byDate[d]) byDate[d] = { date: d, value: 0 }
-      byDate[d].value += a[mKey] || 0
-    })
-    return Object.values(byDate).slice(-20)
-  }, [parsed, mKey])
-
-  const barData = useMemo(() => {
-    const byType = {}
-    parsed.forEach(a => {
-      if (!byType[a._type]) byType[a._type] = { type: a._type, total: 0, count: 0 }
-      byType[a._type].total += a[mKey] || 0
-      byType[a._type].count++
-    })
-    return Object.values(byType).map(t => ({
-      ...t,
-      avg: t.count ? Math.round(t.total / t.count) : 0,
-    }))
-  }, [parsed, mKey])
-
-  // ── Table
-  const sorted = useMemo(() => {
-    const { col, dir } = tableSort
-    return [...parsed].sort((a, b) => {
-      let va, vb
-      if      (col === 'postDate')       { va = a._ms;     vb = b._ms     }
-      else if (col === 'reach')          { va = a._reach;  vb = b._reach  }
-      else if (col === 'views')          { va = a._views;  vb = b._views  }
-      else if (col === 'likes')          { va = a._likes;  vb = b._likes  }
-      else if (col === 'shares')         { va = a._shares; vb = b._shares }
-      else if (col === 'engagementRate') { va = a._er;     vb = b._er     }
-      else if (col === 'postType')       { va = a._type;   vb = b._type   }
-      else                               { va = String(a[col] ?? ''); vb = String(b[col] ?? '') }
-      if (typeof va === 'string') va = va.toLowerCase()
-      if (typeof vb === 'string') vb = vb.toLowerCase()
-      if (va < vb) return dir === 'asc' ? -1 : 1
-      if (va > vb) return dir === 'asc' ? 1  : -1
-      return 0
-    })
-  }, [parsed, tableSort])
-
-  const totalPages = Math.ceil(sorted.length / PAGE_SIZE)
-  const pageData   = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-
-  const handleSort = col => {
-    setTableSort(prev => ({
-      col,
-      dir: prev.col === col && prev.dir === 'asc' ? 'desc' : 'asc',
-    }))
-    setPage(0)
-  }
+function RecentActivities({ posts, analytics }) {
+  const recent = useMemo(() => {
+    const rows = mergePostsAnalytics(posts, analytics)
+    return rows.sort((a, b) => b._ms - a._ms).slice(0, 5)
+  }, [posts, analytics])
 
   return (
-    <div className="sm2-section">
-      {/* KPI Row */}
-      <div className="sm2-kpi-row">
-        <div className="sm2-kpi">
-          <div className="sm2-kpi-icon" style={{ background: accCfg.primary + '18' }} aria-hidden="true">
-            <FileText size={20} color={accCfg.primary} />
-          </div>
-          <div className="sm2-kpi-val" style={{ color: accCfg.primary }}>{kpis.posts}</div>
-          <div className="sm2-kpi-lbl">Total Posts</div>
-        </div>
-        <div className="sm2-kpi">
-          <div className="sm2-kpi-icon" style={{ background: '#7C3AED18' }} aria-hidden="true">
-            <TrendingUp size={20} color="#7C3AED" />
-          </div>
-          <div className="sm2-kpi-val" style={{ color: '#7C3AED' }}>{fmtNum(kpis.avgReach)}</div>
-          <div className="sm2-kpi-lbl">Avg Reach / Post</div>
-        </div>
-        <div className="sm2-kpi">
-          <div className="sm2-kpi-icon" style={{ background: '#EF444418' }} aria-hidden="true">
-            <Zap size={20} color="#EF4444" />
-          </div>
-          <div className="sm2-kpi-val" style={{ color: '#EF4444' }}>{fmtNum(kpis.totalEng)}</div>
-          <div className="sm2-kpi-lbl">Total Engagement</div>
-        </div>
-        <div className="sm2-kpi">
-          <div className="sm2-kpi-icon" style={{ background: '#10B98118' }} aria-hidden="true">
-            <Award size={20} color="#10B981" />
-          </div>
-          <div className="sm2-kpi-val" style={{ color: '#10B981', fontSize: 20 }}>{kpis.bestType}</div>
-          <div className="sm2-kpi-lbl">Best Post Type</div>
-        </div>
-      </div>
-
-      {/* Insights */}
-      {parsed.length > 0 && (
-        <div className="sm2-insights-row">
-          {top.reach && (
-            <InsightCard icon={TrendingUp} label="Highest Reach" color="#7C3AED"
-              value={fmtNum(top.reach._reach)}
-              sub={`${fmtDate(top.reach.postDate)} · ${top.reach._type}`}
-              link={top.reach.link} />
-          )}
-          {top.likes && (
-            <InsightCard icon={Heart} label="Most Liked" color="#EF4444"
-              value={fmtNum(top.likes._likes)}
-              sub={`${fmtDate(top.likes.postDate)} · ${top.likes._type}`}
-              link={top.likes.link} />
-          )}
-          {top.er && (
-            <InsightCard icon={Zap} label="Best Engagement Rate" color="#F59E0B"
-              value={`${top.er._er.toFixed(1)}%`}
-              sub={`${fmtDate(top.er.postDate)} · ${top.er._type}`}
-              link={top.er.link} />
-          )}
-          {top.shares && (
-            <InsightCard icon={Share2} label="Most Shared" color="#10B981"
-              value={fmtNum(top.shares._shares)}
-              sub={`${fmtDate(top.shares.postDate)} · ${top.shares._type}`}
-              link={top.shares.link} />
-          )}
-        </div>
-      )}
-
-      {/* Charts */}
-      {parsed.length > 0 && (
-        <div className="sm2-charts-row">
-          {/* Line chart */}
-          <div className="sm2-chart-card sm2-chart-card--wide">
-            <div className="sm2-chart-head">
-              <h3 className="sm2-chart-title">
-                Trend {metricCfg.label} per Post
-              </h3>
-              <div className="sm2-metric-pills">
-                {CHART_METRICS.map(m => (
-                  <button
-                    key={m.value}
-                    className={`sm2-metric-pill ${chartMetric === m.value ? 'active' : ''}`}
-                    style={chartMetric === m.value
-                      ? { background: m.color, borderColor: m.color, color: '#fff' }
-                      : {}}
-                    onClick={() => setChartMetric(m.value)}
-                    aria-pressed={chartMetric === m.value}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+    <div className="sm3-card">
+      <h3 className="sm3-card-title">Recent Activities</h3>
+      <div className="sm3-activities">
+        {recent.map((p, i) => {
+          const tCfg = TYPE_CFG[p._type] ?? TYPE_CFG.Post
+          const Icon = tCfg.icon
+          return (
+            <div key={i} className="sm3-activity" style={{ '--acolor': TYPE_COLORS[p._type] }}>
+              <div className="sm3-activity-icon" style={{ background: tCfg.bg }}>
+                <Icon size={13} color={tCfg.color} />
+              </div>
+              <div className="sm3-activity-body">
+                <div className="sm3-activity-meta">
+                  <span className="sm3-activity-type" style={{ color: tCfg.color }}>{p._type}</span>
+                  <span className="sm3-activity-date">{fmtDate(p.postDate)}</span>
+                </div>
+                <p className="sm3-activity-caption">
+                  {p.caption
+                    ? (p.caption.length > 80 ? p.caption.slice(0, 80) + '…' : p.caption)
+                    : `${p._type} · ${fmtDate(p.postDate)}`}
+                </p>
+                <div className="sm3-activity-metrics">
+                  <span><TrendingUp size={10} /> {fmtNum(p.reach)}</span>
+                  <span><Eye size={10} /> {fmtNum(p.views)}</span>
+                  {p.link && (
+                    <a href={p.link} target="_blank" rel="noreferrer" className="sm3-activity-link">
+                      View <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={210}>
-              <LineChart data={lineData} margin={{ left: 4, right: 12, bottom: 24, top: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                <XAxis dataKey="date"
-                  tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                  angle={-25} textAnchor="end" height={52}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                  width={52}
-                  tickFormatter={v => fmtNum(v)}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 10, border: '1px solid #E5E7EB', fontSize: 12 }}
-                  formatter={v => [fmtFull(v), metricCfg.label]}
-                />
-                <Line
-                  type="monotone" dataKey="value"
-                  stroke={metricCfg.color} strokeWidth={2.5}
-                  dot={{ r: 3, fill: metricCfg.color, strokeWidth: 0 }}
-                  activeDot={{ r: 5, strokeWidth: 0 }}
-                  animationDuration={500}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Bar chart */}
-          <div className="sm2-chart-card">
-            <div className="sm2-chart-head">
-              <h3 className="sm2-chart-title">Avg {metricCfg.label} by Type</h3>
-            </div>
-            <ResponsiveContainer width="100%" height={210}>
-              <BarChart data={barData} margin={{ left: 4, right: 12, bottom: 8, top: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                <XAxis dataKey="type" tick={{ fontSize: 11, fill: '#9CA3AF' }} />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#9CA3AF' }}
-                  width={52}
-                  tickFormatter={v => fmtNum(v)}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 10, border: '1px solid #E5E7EB', fontSize: 12 }}
-                  formatter={v => [fmtFull(v), `Avg ${metricCfg.label}`]}
-                />
-                <Bar dataKey="avg" radius={[6, 6, 0, 0]} animationDuration={500}>
-                  {barData.map((entry, i) => (
-                    <Cell
-                      key={i}
-                      fill={TYPE_CFG[entry.type]?.color ?? metricCfg.color}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* Performance Table */}
-      <div className="sm2-table-wrap">
-        <div className="sm2-table-header">
-          <h3 className="sm2-chart-title" style={{ margin: 0 }}>Performance Table</h3>
-          <span className="sm2-result-count" aria-live="polite">{sorted.length} posts</span>
-        </div>
-        <div className="sm2-table-scroll">
-          <table className="sm2-table" aria-label="Social media performance data">
-            <thead>
-              <tr>
-                {TABLE_COLS.map(col => (
-                  <th
-                    key={col.key}
-                    className="sm2-th"
-                    style={{ textAlign: col.align }}
-                    onClick={() => handleSort(col.key)}
-                    aria-sort={tableSort.col === col.key
-                      ? (tableSort.dir === 'asc' ? 'ascending' : 'descending')
-                      : 'none'}
-                    scope="col"
-                  >
-                    <span className="sm2-th-inner">
-                      {col.label}
-                      <SortIcon col={col.key} tableSort={tableSort} />
-                    </span>
-                  </th>
-                ))}
-                <th className="sm2-th" scope="col">Link</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageData.map((row, i) => {
-                const tCfg = TYPE_CFG[row._type] ?? TYPE_CFG.Post
-                return (
-                  <tr key={i} className="sm2-tr">
-                    <td className="sm2-td sm2-td--date">{fmtDate(row.postDate)}</td>
-                    <td className="sm2-td">
-                      <span className="sm2-type-badge"
-                        style={{ color: tCfg.color, background: tCfg.bg }}>
-                        {row._type}
-                      </span>
-                    </td>
-                    <td className="sm2-td sm2-td--num">{fmtFull(row._reach)}</td>
-                    <td className="sm2-td sm2-td--num">{fmtFull(row._views)}</td>
-                    <td className="sm2-td sm2-td--num">{fmtFull(row._likes)}</td>
-                    <td className="sm2-td sm2-td--num">{fmtFull(row._shares)}</td>
-                    <td className="sm2-td sm2-td--num">
-                      <span className="sm2-er-cell"
-                        style={{
-                          background: row._er >= 5 ? '#DCFCE7' : row._er >= 2 ? '#FEF9C3' : '#FEE2E2',
-                          color:      row._er >= 5 ? '#166534' : row._er >= 2 ? '#713F12' : '#991B1B',
-                        }}>
-                        {row._er.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="sm2-td">
-                      {row.link && (
-                        <a href={row.link} target="_blank" rel="noreferrer"
-                           className="sm2-link-btn" aria-label="View post">
-                          <ExternalLink size={12} />
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-              {pageData.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="sm2-td sm2-td--empty">Tidak ada data</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="sm2-pagination" role="navigation" aria-label="Table pagination">
-            <button
-              className="sm2-page-btn"
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="sm2-page-info">
-              {page + 1} / {totalPages}
-            </span>
-            <button
-              className="sm2-page-btn"
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              aria-label="Next page"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        )}
+          )
+        })}
+        {recent.length === 0 && <p className="sm3-muted">Tidak ada aktivitas</p>}
       </div>
     </div>
   )
 }
 
-// ─── Root Component ───────────────────────────────────────────────────────────
+// ─── Top Performing Posts ─────────────────────────────────────────────────────
+
+function TopPosts({ analytics }) {
+  const top3 = useMemo(() =>
+    [...analytics]
+      .map(a => ({ ...a, _er: calcER(a), _type: normType(a.postType) }))
+      .sort((a, b) => b._er - a._er)
+      .slice(0, 3),
+  [analytics])
+
+  const statusFor = er =>
+    er >= 5 ? { lbl: '🔥 Hot',  color: '#DC2626' } :
+    er >= 2 ? { lbl: '✓ Good', color: '#059669' } :
+              { lbl: '— Low',  color: '#9CA3AF' }
+
+  return (
+    <div className="sm3-card">
+      <h3 className="sm3-card-title">Top Performing Posts</h3>
+      <table className="sm3-top-table">
+        <thead>
+          <tr>
+            <th>Type</th><th>Tanggal</th><th>ER%</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {top3.map((a, i) => {
+            const tCfg = TYPE_CFG[a._type] ?? TYPE_CFG.Post
+            const Icon = tCfg.icon
+            const st   = statusFor(a._er)
+            return (
+              <tr key={i} className="sm3-top-tr">
+                <td>
+                  <span className="sm3-type-badge" style={{ color: tCfg.color, background: tCfg.bg }}>
+                    <Icon size={10} /> {a._type}
+                  </span>
+                </td>
+                <td className="sm3-td--date">{fmtDate(a.postDate)}</td>
+                <td className="sm3-td--num sm3-er-bold">{a._er.toFixed(1)}%</td>
+                <td style={{ color: st.color, fontWeight: 600, fontSize: 12 }}>{st.lbl}</td>
+              </tr>
+            )
+          })}
+          {top3.length === 0 && (
+            <tr><td colSpan={4} className="sm3-td--empty">Tidak ada data</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function SocialMedia({ data }) {
-  const [mainTab,    setMainTab]    = useState('planner')
-  const [plannerAcc, setPlannerAcc] = useState(ACCOUNTS[0].name)
-  const [perfAcc,    setPerfAcc]    = useState(ACCOUNTS[0].name)
+  const [account,    setAccount]    = useState(ACCOUNTS[0].name)
+  const [filterDate, setFilterDate] = useState(null)
 
   const posts     = data?.posts     ?? []
   const analytics = data?.analytics ?? []
+  const summary   = data?.summary   ?? []
 
-  const plannerCfg = getAccCfg(plannerAcc)
-  const perfCfg    = getAccCfg(perfAcc)
+  const accCfg   = getAccCfg(account)
+  const accPosts = useMemo(() => posts.filter(p => p.account === account),     [posts,     account])
+  const accAna   = useMemo(() => analytics.filter(a => a.account === account), [analytics, account])
 
-  const plannerPosts = useMemo(() =>
-    posts.filter(p => p.account === plannerAcc),
-  [posts, plannerAcc])
-
-  const plannerAna = useMemo(() =>
-    analytics.filter(a => a.account === plannerAcc),
-  [analytics, plannerAcc])
-
-  const perfAna = useMemo(() =>
-    analytics.filter(a => a.account === perfAcc),
-  [analytics, perfAcc])
+  const calPosts = useMemo(() =>
+    (accPosts.length > 0 ? accPosts : accAna),
+  [accPosts, accAna])
 
   if (!analytics.length && !posts.length) {
     return (
-      <div className="sm2-empty-state">
-        <AtSign size={40} style={{ opacity: 0.25 }} aria-hidden="true" />
+      <div className="sm3-empty-state">
+        <AtSign size={40} style={{ opacity: 0.25 }} />
         <p>Memuat data social media…</p>
       </div>
     )
   }
 
   return (
-    <div className="sm2-page">
-      <div className="sm2-page-head">
-        <h1 className="page-title">Social Media</h1>
-        <div className="sm2-page-badges">
-          <span className="sm2-badge sm2-badge--purple">{posts.length} posts</span>
-          <span className="sm2-badge sm2-badge--blue">{analytics.length} analitik</span>
+    <div className="sm3-page">
+      <div className="sm3-page-head">
+        <h1 className="page-title">Social Media Dashboard</h1>
+      </div>
+
+      <AccountTabBar
+        selected={account}
+        onChange={acc => { setAccount(acc); setFilterDate(null) }}
+      />
+
+      <div className="sm3-layout">
+        {/* Left 65% */}
+        <div className="sm3-left">
+          <KPICards analytics={accAna} summary={summary} accCfg={accCfg} />
+          <HeatmapSection analytics={accAna} />
+          <GrowthChart analytics={accAna} />
+          <ContentInsights
+            posts={accPosts}
+            analytics={accAna}
+            filterDate={filterDate}
+            onClearDate={() => setFilterDate(null)}
+          />
         </div>
-      </div>
 
-      {/* Main Tab Switcher */}
-      <div className="sm2-main-tabs" role="tablist" aria-label="Social Media Sections">
-        {[
-          { id: 'planner',     label: 'Content Planner'          },
-          { id: 'performance', label: 'Social Media Performance'  },
-        ].map(t => (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={mainTab === t.id}
-            className={`sm2-main-tab ${mainTab === t.id ? 'active' : ''}`}
-            onClick={() => setMainTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content Planner Panel */}
-      <div className="sm2-panel" aria-hidden={mainTab !== 'planner'}
-           style={{ display: mainTab === 'planner' ? 'block' : 'none' }}>
-        <AccountTabBar selected={plannerAcc} onChange={setPlannerAcc} />
-        <ContentPlannerSection
-          posts={plannerPosts}
-          analytics={plannerAna}
-          accCfg={plannerCfg}
-        />
-      </div>
-
-      {/* Performance Panel */}
-      <div className="sm2-panel" aria-hidden={mainTab !== 'performance'}
-           style={{ display: mainTab === 'performance' ? 'block' : 'none' }}>
-        <AccountTabBar selected={perfAcc} onChange={setPerfAcc} />
-        <PerformanceSection analytics={perfAna} accCfg={perfCfg} />
+        {/* Right 35% */}
+        <div className="sm3-right">
+          <MiniCalendar
+            posts={calPosts}
+            selectedDate={filterDate}
+            onDateSelect={setFilterDate}
+          />
+          <RecentActivities posts={accPosts} analytics={accAna} />
+          <TopPosts analytics={accAna} />
+        </div>
       </div>
     </div>
   )
