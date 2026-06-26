@@ -1,0 +1,32 @@
+.karyawan-page { display: flex; flex-direction: column; gap: 16px; }
+
+.page-row { display: flex; align-items: center; gap: 10px; }
+
+.kar-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.search-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 12px;
+  min-width: 260px; transition: border-color 0.15s;
+}
+.search-wrap:focus-within { border-color: var(--blue); }
+
+.search-input {
+  border: none; outline: none; background: transparent;
+  font-size: 14px; color: var(--label); width: 100%;
+  font-family: inherit;
+}
+.search-input::placeholder { color: var(--label-3); }
+
+.entity-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.entity-pill {
+  padding: 6px 14px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 13px; font-weight: 500; color: var(--label-2);
+  cursor: pointer; transition: all 0.15s;
+}
+.entity-pill:hover { border-color: var(--label-3); }
+.entity-pill.active { color: white; border-color: transparent; }
+.entity-pill.active:not([style]) { background: var(--red); }

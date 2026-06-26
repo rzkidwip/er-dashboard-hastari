@@ -1,0 +1,64 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.kpi-card { padding: 18px 16px; display: flex; flex-direction: column; gap: 6px; }
+
+.kpi-icon-wrap {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px;
+}
+
+.kpi-val   { font-size: 26px; font-weight: 700; color: var(--label); letter-spacing: -0.5px; }
+.kpi-label { font-size: 13px; font-weight: 500; color: var(--label-2); }
+.kpi-sub   { font-size: 12px; color: var(--label-3); }
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.chart-box { padding: 20px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--label-2); margin-bottom: 14px; }
+
+/* Birthday */
+.birthday-section { padding: 18px 20px; }
+
+.birthday-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--label-2);
+  margin-bottom: 14px;
+}
+
+.birthday-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.birthday-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border-radius: var(--radius-sm);
+  padding: 9px 13px;
+}
+
+.bd-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange), #FF6B00);
+  color: white; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.bd-name { font-size: 13px; font-weight: 600; color: var(--label); }
+.bd-meta { font-size: 11px; color: var(--label-3); margin-top: 1px; }
+
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; }
+  .kpi-grid   { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}

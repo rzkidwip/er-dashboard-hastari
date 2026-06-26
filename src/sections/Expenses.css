@@ -1,0 +1,22 @@
+.exp-page { display: flex; flex-direction: column; gap: 16px; }
+
+.exp-kpis {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 14px;
+}
+
+.exp-kpi {
+  padding: 18px 16px; display: flex;
+  flex-direction: column; gap: 8px;
+}
+
+.exp-kpi-val { font-size: 16px; font-weight: 700; color: var(--label); letter-spacing: -0.3px; }
+.exp-kpi-lbl { font-size: 12px; color: var(--label-3); }
+
+.eff-wrap { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.eff-track { width: 56px; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.eff-fill  { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.eff-text  { font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .exp-kpis { grid-template-columns: repeat(2,1fr); }
+}

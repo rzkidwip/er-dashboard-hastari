@@ -1,0 +1,258 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.dash{background:var(--color-background-tertiary,#f5f4f0);min-height:600px}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:48px}
+.brand{font-size:13px;font-weight:500;color:#1287c1;display:flex;align-items:center;gap:8px}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:#1287c1}
+.topbar-right{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--color-text-secondary)}
+.date-badge{background:var(--color-background-secondary);padding:3px 10px;border-radius:6px;font-size:11px;color:var(--color-text-secondary)}
+.nav{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:0 20px;display:flex;gap:0}
+.nav-item{font-size:12px;padding:10px 14px;color:var(--color-text-secondary);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer}
+.nav-item.active{color:#1287c1;border-bottom-color:#1287c1;font-weight:500}
+.body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.mc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px;position:relative;overflow:hidden}
+.mc-accent{position:absolute;top:0;left:0;width:3px;height:100%;border-radius:12px 0 0 12px}
+.mc-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.mc-val{font-size:24px;font-weight:500;color:var(--color-text-primary);line-height:1}
+.mc-sub{font-size:11px;margin-top:4px}
+.row2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:14px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);display:flex;align-items:center;gap:6px}
+.card-title i{font-size:15px;color:#1287c1}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:500;padding:2px 7px;border-radius:5px}
+.b-blue{background:#e6f1fb;color:#0c447c}
+.b-green{background:#eaf3de;color:#27500a}
+.b-pink{background:#fbeaf0;color:#72243e}
+.b-warn{background:#faeeda;color:#633806}
+.b-gray{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.item:last-child{border-bottom:none}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.av-b{background:#e6f1fb;color:#0c447c}
+.av-p{background:#fbeaf0;color:#72243e}
+.av-t{background:#e1f5ee;color:#085041}
+.av-a{background:#faeeda;color:#633806}
+.item-main{flex:1;min-width:0}
+.item-name{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.item-sub{font-size:10px;color:var(--color-text-secondary);margin-top:1px}
+.prog-wrap{margin-bottom:10px}
+.prog-hd{display:flex;justify-content:space-between;font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.prog-bar{height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.cal-dh{font-size:9px;text-align:center;color:var(--color-text-secondary);padding:3px 0}
+.cal-d{font-size:10px;text-align:center;padding:4px 2px;border-radius:4px;color:var(--color-text-secondary)}
+.cal-d.bday{background:#fbeaf0;color:#72243e;font-weight:600;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin:auto}
+.cal-d.today{background:#1287c1;color:#fff;font-weight:600;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin:auto}
+.cal-d.event{background:#eaf3de;color:#27500a;font-weight:600}
+.section-hd{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.tag{font-size:10px;padding:1px 6px;border-radius:4px;margin-right:4px}
+.divider{border:none;border-top:0.5px solid var(--color-border-tertiary);margin:8px 0}
+</style>
+
+<div class="dash">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      ER Dashboard · Hastari Corporation
+    </div>
+    <div class="topbar-right">
+      <span class="date-badge"><i class="ti ti-calendar" style="font-size:11px;vertical-align:-1px;margin-right:3px" aria-hidden="true"></i>Senin, 15 Juni 2026</span>
+      <span>Rizki Dwi Pangestu</span>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-item active">Overview</div>
+    <div class="nav-item">Birthday</div>
+    <div class="nav-item">Karyawan</div>
+    <div class="nav-item">Engagement</div>
+    <div class="nav-item">Sports Day</div>
+    <div class="nav-item">Content Planner</div>
+    <div class="nav-item">MOLEN</div>
+  </div>
+
+  <div class="body">
+
+    <div class="metrics">
+      <div class="mc">
+        <div class="mc-accent" style="background:#1287c1"></div>
+        <div class="mc-label" style="padding-left:8px"><i class="ti ti-users" style="font-size:13px" aria-hidden="true"></i> Total karyawan</div>
+        <div class="mc-val" style="padding-left:8px">132</div>
+        <div class="mc-sub" style="padding-left:8px;color:var(--color-text-secondary)">Data aktif terdaftar</div>
+      </div>
+      <div class="mc">
+        <div class="mc-accent" style="background:#d4537e"></div>
+        <div class="mc-label" style="padding-left:8px"><i class="ti ti-cake" style="font-size:13px" aria-hidden="true"></i> Birthday bulan ini</div>
+        <div class="mc-val" style="padding-left:8px">7</div>
+        <div class="mc-sub" style="padding-left:8px;color:#d4537e">Vergina · 4 hari lagi</div>
+      </div>
+      <div class="mc">
+        <div class="mc-accent" style="background:#1d9e75"></div>
+        <div class="mc-label" style="padding-left:8px"><i class="ti ti-flag" style="font-size:13px" aria-hidden="true"></i> Total events 2026</div>
+        <div class="mc-val" style="padding-left:8px">13</div>
+        <div class="mc-sub" style="padding-left:8px;color:var(--color-text-secondary)">3 engagement · 4 sports</div>
+      </div>
+      <div class="mc">
+        <div class="mc-accent" style="background:#639922"></div>
+        <div class="mc-label" style="padding-left:8px"><i class="ti ti-photo" style="font-size:13px" aria-hidden="true"></i> Konten dipublish</div>
+        <div class="mc-val" style="padding-left:8px">25</div>
+        <div class="mc-sub" style="padding-left:8px;color:var(--color-text-secondary)">Content + MOLEN</div>
+      </div>
+      <div class="mc">
+        <div class="mc-accent" style="background:#ba7517"></div>
+        <div class="mc-label" style="padding-left:8px"><i class="ti ti-wallet" style="font-size:13px" aria-hidden="true"></i> Total anggaran</div>
+        <div class="mc-val" style="font-size:18px;padding-left:8px">Rp 15.9M</div>
+        <div class="mc-sub" style="padding-left:8px;color:var(--color-text-secondary)">3 event engagement</div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title"><i class="ti ti-users" aria-hidden="true"></i> Distribusi karyawan per entitas</div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-hd"><span>HAI</span><span style="font-weight:500">68 orang</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:52%;background:#1287c1"></div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-hd"><span>BPN / Bodha</span><span style="font-weight:500">38 orang</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:29%;background:#378add"></div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-hd"><span>HAP</span><span style="font-weight:500">14 orang</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:11%;background:#85b7eb"></div></div>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-hd"><span>Lainnya</span><span style="font-weight:500">12 orang</span></div>
+            <div class="prog-bar"><div class="prog-fill" style="width:9%;background:#b5d4f4"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title"><i class="ti ti-cake" aria-hidden="true"></i> Ulang tahun terdekat</div>
+            <span class="badge b-pink">Juni 2026</span>
+          </div>
+          <div class="item">
+            <div class="av av-p">VL</div>
+            <div class="item-main">
+              <div class="item-name">Vergina Larasari</div>
+              <div class="item-sub">HAI · 19 Juni 2026</div>
+            </div>
+            <span class="badge b-warn">4 hari lagi</span>
+          </div>
+          <div class="item">
+            <div class="av av-b">BW</div>
+            <div class="item-main">
+              <div class="item-name">Bimantara Wibisana</div>
+              <div class="item-sub">BPN · 22 Juni 2026</div>
+            </div>
+            <span class="badge b-gray">7 hari lagi</span>
+          </div>
+          <div class="item">
+            <div class="av av-t">AB</div>
+            <div class="item-main">
+              <div class="item-name">Arya Berliana Tambunan</div>
+              <div class="item-sub">HAI · 25 Juni 2026</div>
+            </div>
+            <span class="badge b-gray">10 hari lagi</span>
+          </div>
+          <div class="item">
+            <div class="av av-a">MF</div>
+            <div class="item-main">
+              <div class="item-name">M. Firdaus</div>
+              <div class="item-sub">HAI · 26 Juni 2026</div>
+            </div>
+            <span class="badge b-gray">11 hari lagi</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title"><i class="ti ti-calendar" aria-hidden="true"></i> Kalender Juni 2026</div>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-dh">Min</div><div class="cal-dh">Sen</div><div class="cal-dh">Sel</div><div class="cal-dh">Rab</div><div class="cal-dh">Kam</div><div class="cal-dh">Jum</div><div class="cal-dh">Sab</div>
+            <div class="cal-d"></div><div class="cal-d">2</div><div class="cal-d">3</div><div class="cal-d">4</div><div class="cal-d">5</div><div class="cal-d bday">6</div><div class="cal-d">7</div>
+            <div class="cal-d bday">8</div><div class="cal-d">9</div><div class="cal-d">10</div><div class="cal-d">11</div><div class="cal-d">12</div><div class="cal-d">13</div><div class="cal-d">14</div>
+            <div class="cal-d today">15</div><div class="cal-d">16</div><div class="cal-d">17</div><div class="cal-d">18</div><div class="cal-d bday">19</div><div class="cal-d">20</div><div class="cal-d">21</div>
+            <div class="cal-d bday">22</div><div class="cal-d">23</div><div class="cal-d">24</div><div class="cal-d bday">25</div><div class="cal-d bday">26</div><div class="cal-d">27</div><div class="cal-d">28</div>
+            <div class="cal-d event">29</div><div class="cal-d">30</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:50%;background:#1287c1"></div>Hari ini</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:50%;background:#d4537e"></div>Birthday</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:4px;background:#eaf3de"></div>Event</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title"><i class="ti ti-flag" aria-hidden="true"></i> Event terbaru</div>
+          </div>
+          <div class="item">
+            <div style="width:4px;height:36px;background:#1d9e75;border-radius:2px;flex-shrink:0"></div>
+            <div class="item-main">
+              <div class="item-name">Sports Day — Badminton</div>
+              <div class="item-sub">29 Apr 2026</div>
+            </div>
+            <span class="badge b-green">Selesai</span>
+          </div>
+          <div class="item">
+            <div style="width:4px;height:36px;background:#1287c1;border-radius:2px;flex-shrink:0"></div>
+            <div class="item-main">
+              <div class="item-name">Halal Bi Halal</div>
+              <div class="item-sub">24 Apr 2026</div>
+            </div>
+            <span class="badge b-green">Selesai</span>
+          </div>
+          <div class="item">
+            <div style="width:4px;height:36px;background:#ba7517;border-radius:2px;flex-shrink:0"></div>
+            <div class="item-main">
+              <div class="item-name">Sports Day — Futsal</div>
+              <div class="item-sub">29 Jun 2026</div>
+            </div>
+            <span class="badge b-warn">Upcoming</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><i class="ti ti-pencil" aria-hidden="true"></i> Content planner terbaru</div>
+        <span class="badge b-blue">25 konten</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="background:var(--color-background-secondary);border-radius:8px;padding:10px">
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px">15 Jun 2026</div>
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px">Behind the scenes Town Hall</div>
+          <div style="display:flex;gap:4px"><span class="badge b-gray">Story</span><span class="badge b-blue">Scheduled</span></div>
+        </div>
+        <div style="background:var(--color-background-secondary);border-radius:8px;padding:10px">
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px">20 Jun 2026</div>
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px">Employee spotlight Juni</div>
+          <div style="display:flex;gap:4px"><span class="badge b-gray">Feed</span><span class="badge b-green">Ready</span></div>
+        </div>
+        <div style="background:var(--color-background-secondary);border-radius:8px;padding:10px">
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:4px">25 Jun 2026</div>
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px">MOLEN #20 — Leadership</div>
+          <div style="display:flex;gap:4px"><span class="badge b-gray">Feed</span><span class="badge b-warn">Draft</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
