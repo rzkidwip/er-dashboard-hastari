@@ -1,9 +1,11 @@
+/* ── Events grid ────────────────────────────────────────────── */
 .events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
   gap: 14px;
 }
 
+/* ── Event card ─────────────────────────────────────────────── */
 .event-card { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
 
 .ev-top { display: flex; justify-content: space-between; align-items: center; }
@@ -24,16 +26,124 @@
 }
 
 .ev-desc {
-  font-size: 12px; color: var(--label-3);
-  line-height: 1.55; margin: 0;
+  font-size: 12px; color: var(--label-3); line-height: 1.55; margin: 0;
   display: -webkit-box; -webkit-line-clamp: 3;
   -webkit-box-orient: vertical; overflow: hidden;
 }
 
 .ev-footer {
-  display: flex; justify-content: space-between;
-  align-items: center; margin-top: auto;
-  padding-top: 10px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border);
 }
 
 .ev-budget { font-size: 13px; font-weight: 600; color: var(--red); }
+
+/* ── Expand button ──────────────────────────────────────────── */
+.ev-expand-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 7px 14px;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--label-2);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.ev-expand-btn:hover {
+  background: var(--blue-light); color: var(--blue); border-color: var(--blue);
+}
+
+/* ── Volunteers panel (inside card) ─────────────────────────── */
+.ev-panel {
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+  animation: evFadeIn 0.25s ease;
+}
+@keyframes evFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ev-panel-title {
+  font-size: 11px; font-weight: 700; color: var(--label-2);
+  text-transform: uppercase; letter-spacing: 0.4px; margin: 0;
+}
+
+.ev-vol-list {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 220px; overflow-y: auto;
+}
+.ev-vol-list::-webkit-scrollbar { width: 3px; }
+.ev-vol-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.ev-vol-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 10px; background: var(--surface-2);
+  transition: background 0.15s;
+}
+.ev-vol-item:hover { background: var(--blue-light); }
+
+.ev-vol-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; margin-top: 1px;
+}
+
+.ev-vol-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.ev-vol-name-row {
+  display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap;
+}
+.ev-vol-name   { font-size: 13px; font-weight: 600; color: var(--label); }
+.ev-vol-entity { font-size: 11px; color: var(--label-3); }
+.ev-vol-role   { font-size: 12px; color: var(--label-3); font-style: italic; }
+
+/* ── Participation overview table ───────────────────────────── */
+.ev-overview { margin-top: 20px; overflow: hidden; }
+
+.ev-ov-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px 12px; border-bottom: 1px solid var(--border);
+}
+.ev-ov-title {
+  font-size: 13px; font-weight: 700; color: var(--label);
+  letter-spacing: 0.1px;
+}
+.ev-ov-sub { font-size: 12px; color: var(--label-3); }
+
+.ev-ov-table { width: 100%; border-collapse: collapse; }
+
+.ev-ov-table thead { background: var(--surface-2); }
+.ev-ov-table th {
+  padding: 9px 16px; text-align: left;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.3px; color: var(--label-3);
+  border-bottom: 1px solid var(--border);
+}
+.ev-ov-col-num   { width: 36px; text-align: center; }
+.ev-ov-col-count { width: 90px; text-align: center; cursor: pointer; user-select: none; }
+.ev-ov-col-count:hover { color: var(--blue); }
+.ev-ov-col-roles { color: var(--label-3); }
+
+.ev-ov-sort-icon { vertical-align: middle; opacity: 0.5; margin-left: 3px; }
+
+.ev-ov-table td {
+  padding: 10px 16px; font-size: 13px;
+  border-bottom: 1px solid var(--border); color: var(--label-2);
+}
+.ev-ov-table tbody tr:last-child td { border-bottom: none; }
+.ev-ov-table tbody tr:hover td { background: #F9FAFB; }
+
+.ev-ov-num   { text-align: center; font-size: 12px; color: var(--label-3); font-weight: 600; }
+.ev-ov-name  { font-weight: 600; color: var(--label); }
+.ev-ov-count { text-align: center; font-weight: 700; font-size: 14px; color: var(--blue); }
+.ev-ov-roles {
+  color: var(--label-3); font-size: 12px;
+  max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .ev-ov-col-roles,
+  .ev-ov-roles { display: none; }
+  .ev-ov-table th, .ev-ov-table td { padding: 8px 12px; }
+  .ev-vol-name { font-size: 12px; }
+}
