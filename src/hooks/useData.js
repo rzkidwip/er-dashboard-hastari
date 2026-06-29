@@ -253,14 +253,21 @@ async function fetchAll() {
       })).filter(e => e.eventName)
   } catch (e) { console.warn('Events', e.message) }
 
-  // Volunteers
+  // Volunteers — forward-fill Event Name karena merged cells di sheet
   try {
+    let lastEventName = ''
     data.volunteers = toObjects(volRows, 'volunteer name')
-      .map(o => ({
-        eventName: o['Event Name'] || '', volunteerName: o['Volunteer Name'] || '',
-        nik: o['NIK'] || '', role: o['Role'] || '',
-        entity: o['Divisi / Entity'] || '', status: o['Status'] || '',
-      })).filter(v => v.volunteerName)
+      .map(o => {
+        if (o['Event Name']) lastEventName = o['Event Name']
+        return {
+          eventName:     lastEventName,
+          volunteerName: o['Volunteer Name'] || '',
+          nik:           o['NIK'] || '',
+          role:          o['Role'] || '',
+          entity:        o['Divisi / Entity'] || '',
+          status:        o['Status'] || '',
+        }
+      }).filter(v => v.volunteerName)
   } catch (e) { console.warn('Volunteers', e.message) }
 
   // Sports — forward-fill eventNo & category karena merged cells di sheet
