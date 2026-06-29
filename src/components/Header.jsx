@@ -16,7 +16,13 @@ export default function Header({ syncTime, onSync }) {
   return (
     <header className="header">
       <div className="header-brand">
-        <img src={LOGO_URL} alt="Portal Hastarian" className="header-logo" />
+        <img
+          src={LOGO_URL}
+          alt="Portal Hastarian"
+          className="header-logo"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{ cursor: 'pointer' }}
+        />
         <div>
           <div className="header-title">Portal ER Hastari Corp</div>
           {syncTime && <div className="header-sub">Terakhir sync {syncTime}</div>}
