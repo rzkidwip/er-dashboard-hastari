@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import './Header.css'
 
+const LOGO_URL = `${import.meta.env.BASE_URL}assets/logo-hastari.png`
+
 export default function Header({ syncTime, onSync }) {
   const [syncing, setSyncing] = useState(false)
 
@@ -14,7 +16,7 @@ export default function Header({ syncTime, onSync }) {
   return (
     <header className="header">
       <div className="header-brand">
-        <div className="header-logo">ER</div>
+        <img src={LOGO_URL} alt="Portal Hastarian" className="header-logo" />
         <div>
           <div className="header-title">Portal ER Hastari Corp</div>
           {syncTime && <div className="header-sub">Terakhir sync {syncTime}</div>}

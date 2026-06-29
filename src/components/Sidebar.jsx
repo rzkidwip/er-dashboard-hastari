@@ -1,6 +1,8 @@
 import { LayoutDashboard, Users, CalendarDays, Trophy, Share2, CreditCard, CalendarRange } from 'lucide-react'
 import './Sidebar.css'
 
+const LOGO_URL = `${import.meta.env.BASE_URL}assets/logo-hastari.png`
+
 const MENU = [
   { id: 'dashboard', label: 'Dashboard',    Icon: LayoutDashboard },
   { id: 'karyawan',  label: 'Karyawan',     Icon: Users },
@@ -14,6 +16,9 @@ const MENU = [
 export default function Sidebar({ active, onChange }) {
   return (
     <aside className="sidebar">
+      <div className="sidebar-brand">
+        <img src={LOGO_URL} alt="Portal Hastarian" className="sidebar-logo" />
+      </div>
       <p className="sidebar-section-label">Menu</p>
       <nav>
         {MENU.map(({ id, label, Icon }) => (
