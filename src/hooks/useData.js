@@ -3,6 +3,11 @@ import { useState, useEffect, useCallback } from 'react'
 const CACHE_VERSION = 'v16'
 const SHEET_ID = '1qgzmEsj05nX3jG9FXvJAKUiwb9vsEEyJ'
 
+const FALLBACK_FOLLOWERS = {
+  'Life at Hastari':      995,
+  'Hastari Jaya Sentosa': 3596,
+}
+
 const FALLBACK_EXPENSES = [
   {
     expenseId: 'CA-2026-001',
@@ -378,7 +383,7 @@ export function useData() {
   const [data,      setData]      = useState(null)
   const [loading,   setLoading]   = useState(true)
   const [syncTime,  setSyncTime]  = useState(localStorage.getItem('syncTime') || '')
-  const [followers, setFollowers] = useState({})
+  const [followers, setFollowers] = useState(FALLBACK_FOLLOWERS)
 
   const load = useCallback(async (force = false) => {
     if (!force) {
@@ -416,11 +421,12 @@ export function useData() {
       setFollowers(json)
       localStorage.setItem('igFollowers', JSON.stringify({ data: json, at: Date.now() }))
     } catch {
-      // Server not running or Instagram blocked — restore last cached value
+      // Server not running or Instagram blocked — restore last cached value, then hardcoded fallback
       try {
         const saved = localStorage.getItem('igFollowers')
-        if (saved) setFollowers(JSON.parse(saved).data ?? {})
-      } catch { /* nothing */ }
+        if (saved) setFollowers(JSON.parse(saved).data ?? FALLBACK_FOLLOWERS)
+        else setFollowers(FALLBACK_FOLLOWERS)
+      } catch { setFollowers(FALLBACK_FOLLOWERS) }
     }
   }, [])
 
