@@ -78,14 +78,18 @@ export default function Expenses({ data }) {
               ? <tr><td colSpan={7} style={{textAlign:'center',padding:32,color:'var(--label-3)'}}>Tidak ada data</td></tr>
               : exp.map((e,i)=>{
                 const rate = parseFloat(e.efficiencyRate)||0
-                const barColor = rate>=90?'var(--green)':rate>=70?'var(--orange)':'var(--red)'
+                const isOver = rate > 100
+                const barColor = isOver ? '#EF4444' : rate>=90?'var(--green)':rate>=70?'var(--orange)':'var(--red)'
                 const isDone = e.status?.toLowerCase().includes('done')
                 return (
-                  <tr key={i}>
-                    <td style={{fontFamily:'monospace',fontSize:12,color:'var(--label-3)'}}>{e.expenseId}</td>
-                    <td style={{fontWeight:500,maxWidth:220}}>{e.activityName}</td>
+                  <tr key={i} className={isOver ? 'over-budget' : ''}>
+                    <td style={{fontFamily:'monospace',fontSize:12,color:'var(--label-3)'}}>
+                      {isOver && <span title="Over Budget" style={{marginRight:4}}>⚠️</span>}
+                      {e.expenseId}
+                    </td>
+                    <td style={{fontWeight: isOver ? 700 : 500, maxWidth:220}}>{e.activityName}</td>
                     <td style={{textAlign:'right',fontSize:13}}>{fmt(parseRp(e.submissionAmount))}</td>
-                    <td style={{textAlign:'right',fontSize:13,fontWeight:600,color:'var(--red)'}}>{fmt(parseRp(e.realizationAmount))}</td>
+                    <td style={{textAlign:'right',fontSize:13,fontWeight:600,color:'#EF4444'}}>{fmt(parseRp(e.realizationAmount))}</td>
                     <td style={{textAlign:'right',fontSize:13,color:'var(--green)'}}>{fmt(parseRp(e.refundAmount))}</td>
                     <td style={{textAlign:'center'}}>
                       {e.efficiencyRate
@@ -93,7 +97,7 @@ export default function Expenses({ data }) {
                             <div className="eff-track">
                               <div className="eff-fill" style={{width:`${Math.min(rate,100)}%`,background:barColor}}/>
                             </div>
-                            <span className="eff-text" style={{color:barColor}}>{e.efficiencyRate}</span>
+                            <span className="eff-text" style={{color:barColor,fontWeight: isOver ? 700 : 600}}>{e.efficiencyRate}</span>
                           </div>
                         : <span style={{color:'var(--label-4)',fontSize:12}}>—</span>}
                     </td>

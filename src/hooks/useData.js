@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const CACHE_VERSION = 'v15'
+const CACHE_VERSION = 'v16'
 const SHEET_ID = '1qgzmEsj05nX3jG9FXvJAKUiwb9vsEEyJ'
 
 const FALLBACK_EXPENSES = [
@@ -353,16 +353,16 @@ async function fetchAll() {
 
   // Expenses
   try {
-    const fetched = toObjects(expRows, 'expense id')
+    const fetched = toObjects(expRows, 'id')
       .map(o => ({
-        expenseId: o['TRACKER CA EMPLOYEE RELATION Expense ID'] || o['Expense ID'] || '',
-        activityName: o['Activity Name'] || '',
-        submissionAmount: o['Total Submission Amount'] || '',
-        realizationAmount: o['Total Realization Amount'] || '',
-        refundAmount: o['Total Refund'] || '',
-        efficiencyRate: o['Efficiency Rate'] || '',
-        status: o['Status'] || '',
-        attachmentLink: o['Attachment Link / pdf'] || '',
+        expenseId:         o['ID'] || o['TRACKER CA EMPLOYEE RELATION Expense ID'] || o['Expense ID'] || '',
+        activityName:      o['KEGIATAN'] || o['Activity Name'] || '',
+        submissionAmount:  o['PENGAJUAN'] || o['Total Submission Amount'] || '',
+        realizationAmount: o['REALISASI'] || o['Total Realization Amount'] || '',
+        refundAmount:      o['Total Refund'] || '',
+        efficiencyRate:    o['EFISIENSI'] || o['RATE'] || o['Efficiency Rate'] || '',
+        status:            o['STATUS'] || o['Status'] || '',
+        attachmentLink:    o['Attachment Link / pdf'] || '',
       })).filter(e => e.expenseId)
     data.expenses = fetched.length > 0 ? fetched : FALLBACK_EXPENSES
   } catch (e) {
